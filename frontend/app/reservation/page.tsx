@@ -74,6 +74,12 @@ export default async function ReservationPage() {
   const thursdayKey = addDays(currentWeekMondayKey(now), 3);
   const comeBackLabel = dayLabel(keyToDate(thursdayKey));
 
+  // Has the student booked every bookable day of the week? (one per day, Mon–Fri)
+  const weekDayKeys = new Set(slots.map((s) => s.dayKey));
+  const bookedDayKeys = new Set(myReservations.map((r) => r.dayKey));
+  const allDaysBooked = weekDayKeys.size > 0 && bookedDayKeys.size >= weekDayKeys.size;
+  const weekLabel = weekRangeLabel(slots);
+
   return (
     <main className="scheduler-page">
       <section className="scheduler-panel">
@@ -82,6 +88,8 @@ export default async function ReservationPage() {
           loggedIn
           reservations={myReservations}
           comeBackLabel={comeBackLabel}
+          allDaysBooked={allDaysBooked}
+          weekLabel={weekLabel}
         />
         <div className="scheduler-topbar">
           <div>

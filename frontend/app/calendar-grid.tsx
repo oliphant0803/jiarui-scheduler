@@ -56,10 +56,11 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
   //  - phase 1 (Mon noon–Wed noon) allows ONE booking for the whole week, so any
   //    existing reservation locks every other slot;
   //  - phase 2 allows one per day, so a day with a reservation locks that day.
-  const mineKeys = useMemo(
-    () => new Set(myReservations.map((r) => `${r.dayKey} ${r.start}`)),
-    [myReservations],
-  );
+  const mineByKey = useMemo(() => {
+    const map = new Map<string, MyReservation>();
+    for (const r of myReservations) map.set(`${r.dayKey} ${r.start}`, r);
+    return map;
+  }, [myReservations]);
   const reservedDays = useMemo(
     () => new Set(myReservations.map((r) => r.dayKey)),
     [myReservations],
@@ -215,11 +216,18 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
                 }
 
                 const isSelected = selectedSlotId === slot.id;
-                const isMine = mineKeys.has(`${slot.dayKey} ${slot.start}`);
+                const mine = mineByKey.get(`${slot.dayKey} ${slot.start}`);
+                const isMine = Boolean(mine);
                 const dayLocked = !isMine && reservedDays.has(slot.dayKey);
                 const lockedOut = !isMine && (weekLocked || dayLocked);
                 const selectable = canBook && !isMine && !lockedOut;
-                const label = slot.flexible ? "TEF / TCF" : slot.examType;
+                // A booked slot shows the exam type the student actually confirmed
+                // (so a flexible Friday slot reads "TEF" or "TCF", not "TEF / TCF").
+                const label = mine
+                  ? mine.examType
+                  : slot.flexible
+                    ? "TEF / TCF"
+                    : slot.examType;
 
                 const statusText = isMine
                   ? "✓ Your booking"

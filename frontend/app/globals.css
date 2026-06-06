@@ -1288,11 +1288,12 @@ body {
   background: rgba(110, 86, 168, 0.12);
 }
 
-/* The student's own booking — a bold, filled green so it is unmistakable. */
+/* The student's own booking — the French blue from the flag with a little
+   transparency, so it stands out without being a flat solid block. */
 .calendar-slot.is-mine,
 .calendar-slot.is-mine:disabled {
-  background: #1f9d55;
-  box-shadow: inset 6px 0 0 #126e3a;
+  background: rgba(0, 85, 164, 0.82);
+  box-shadow: inset 6px 0 0 var(--bleu-deep);
   cursor: default;
 }
 

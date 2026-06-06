@@ -17,9 +17,18 @@ type Props = {
   loggedIn: boolean;
   reservations?: ReservationLite[];
   comeBackLabel?: string;
+  allDaysBooked?: boolean;
+  weekLabel?: string;
 };
 
-export function TalkingBrandHeader({ phase, loggedIn, reservations = [], comeBackLabel }: Props) {
+export function TalkingBrandHeader({
+  phase,
+  loggedIn,
+  reservations = [],
+  comeBackLabel,
+  allDaysBooked = false,
+  weekLabel,
+}: Props) {
   const [zh, setZh] = useState(false);
 
   return (
@@ -53,6 +62,8 @@ export function TalkingBrandHeader({ phase, loggedIn, reservations = [], comeBac
             loggedIn={loggedIn}
             reservations={reservations}
             comeBackLabel={comeBackLabel}
+            allDaysBooked={allDaysBooked}
+            weekLabel={weekLabel}
           />
         ) : (
           <EnglishMessage
@@ -60,6 +71,8 @@ export function TalkingBrandHeader({ phase, loggedIn, reservations = [], comeBac
             loggedIn={loggedIn}
             reservations={reservations}
             comeBackLabel={comeBackLabel}
+            allDaysBooked={allDaysBooked}
+            weekLabel={weekLabel}
           />
         )}
       </div>
@@ -75,11 +88,28 @@ function summarize(reservations: ReservationLite[], zh = false): string {
   return zh ? `${base} 等 ${reservations.length} 个` : `${base} +${more} more`;
 }
 
-function EnglishMessage({ phase, loggedIn, reservations = [], comeBackLabel }: Props) {
+function EnglishMessage({
+  phase,
+  loggedIn,
+  reservations = [],
+  comeBackLabel,
+  allDaysBooked,
+  weekLabel,
+}: Props) {
   if (!loggedIn) {
     return (
       <p className="talking-brand-text">
         Please <strong>log in first</strong> to book a timeslot.
+      </p>
+    );
+  }
+
+  if (allDaysBooked) {
+    return (
+      <p className="talking-brand-text">
+        Whoa — you booked <strong>all five days</strong>! 🦉 You&apos;ve cleaned
+        out the whole nest; there is literally nothing left for you to peck at.
+        Go rest those wings — <strong>see you in class {weekLabel ?? "next week"}</strong>. 🪺
       </p>
     );
   }
@@ -154,11 +184,27 @@ function EnglishMessage({ phase, loggedIn, reservations = [], comeBackLabel }: P
   );
 }
 
-function ChineseMessage({ phase, loggedIn, reservations = [], comeBackLabel }: Props) {
+function ChineseMessage({
+  phase,
+  loggedIn,
+  reservations = [],
+  comeBackLabel,
+  allDaysBooked,
+  weekLabel,
+}: Props) {
   if (!loggedIn) {
     return (
       <p className="talking-brand-text">
         请先 <strong>登录</strong>，然后才能预约时间。
+      </p>
+    );
+  }
+
+  if (allDaysBooked) {
+    return (
+      <p className="talking-brand-text">
+        哇——你把 <strong>五天全约满</strong> 了！🦉 整个窝都被你掏空了，这儿真的没啥可叼的了。
+        回去歇歇翅膀吧，<strong>{weekLabel ?? "下周"} 课上见</strong>。🪺
       </p>
     );
   }
