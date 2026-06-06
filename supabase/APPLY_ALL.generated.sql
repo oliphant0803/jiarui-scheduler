@@ -176,22 +176,23 @@ create policy profiles_update_admin on public.profiles
 -- Slot generation rules (for the weekly job, not enforced here):
 --   Mon & Tue  TEF  18:30-20:30  -> 4 x 30min slots
 --   Wed & Thu  TCF  18:00-21:00  -> 6 x 30min slots
---   Fri        TEF AND TCF  18:00-21:00 -> 6 slots; student picks the exam_type
---              when booking. Friday is the only day with both types at the same
---              start_time, which is why the UNIQUE below includes exam_type.
+--   Fri        exam_type NULL  18:00-21:00 -> 6 x 30min slots; student picks
+--              TEF or TCF when booking. The chosen type is stored on the
+--              reservation, not fixed on the generated slot.
 
 create table if not exists public.time_slots (
   id         uuid primary key default gen_random_uuid(),
   slot_date  date not null,
   start_time time not null,
   end_time   time not null,
-  exam_type  public.exam_type not null,
+  -- NULL only for Friday flexible slots (PROJECT_SPEC §0.2 / §6).
+  exam_type  public.exam_type,
   -- Monday of the target week this slot belongs to (for weekly cycling, §4).
   week_start date not null,
   created_at timestamptz not null default now(),
-  -- One row per (day, start_time, exam_type). Friday can hold a TEF *and* a TCF
-  -- row at the same start_time; all other days have a single exam_type per day.
-  constraint time_slots_day_time_type_key unique (slot_date, start_time, exam_type)
+  -- One generated slot per day/start. Friday's exam choice is made later on
+  -- reservations, so re-running the generator no-ops on this key.
+  constraint time_slots_day_time_key unique (slot_date, start_time)
 );
 
 create index if not exists time_slots_week_start_idx on public.time_slots (week_start);
@@ -225,6 +226,9 @@ create table if not exists public.reservations (
   slot_id    uuid not null references public.time_slots (id) on delete cascade,
   student_id uuid not null references public.profiles (id)   on delete cascade,
   topic      public.reservation_topic   not null,
+  -- Resolved server-side from time_slots.exam_type for Mon-Thu; required from
+  -- the student only for Friday flexible slots (PROJECT_SPEC §0.2 / §6).
+  exam_type  public.exam_type           not null,
   status     public.reservation_status  not null default 'active',
   -- Denormalized from time_slots.slot_date so the one-per-day partial unique
   -- index below can be expressed on this table. Maintained by a trigger; never
@@ -251,12 +255,17 @@ security definer
 set search_path = public
 as $$
 begin
-  select ts.slot_date into new.slot_date
+  select ts.slot_date, coalesce(ts.exam_type, new.exam_type)
+    into new.slot_date, new.exam_type
   from public.time_slots ts
   where ts.id = new.slot_id;
 
   if new.slot_date is null then
     raise exception 'invalid slot_id: %', new.slot_id;
+  end if;
+
+  if new.exam_type is null then
+    raise exception 'exam_type is required for flexible Friday slots';
   end if;
 
   -- FCFS tiebreaker is set by the server, ignoring any client-supplied value.
@@ -268,9 +277,10 @@ begin
 end;
 $$;
 
+drop trigger if exists reservations_set_slot_fields on public.reservations;
 drop trigger if exists reservations_set_slot_date on public.reservations;
-create trigger reservations_set_slot_date
-  before insert or update of slot_id on public.reservations
+create trigger reservations_set_slot_fields
+  before insert or update of slot_id, exam_type on public.reservations
   for each row execute function public.set_reservation_slot_date();
 
 -- ---------------------------------------------------------------------------
@@ -357,3 +367,110 @@ $$;
 -- Callable by both anon (pre-login registration form) and authenticated users.
 grant execute on function public.registration_conflicts(text, text, text) to anon, authenticated;
 
+-- ============================================================
+-- supabase/migrations/20260606000006_flexible_friday_slots.sql
+-- ============================================================
+-- 20260606000006_flexible_friday_slots.sql
+-- Bring an existing database forward to the resolved Friday model:
+-- one generated Friday slot row with time_slots.exam_type = NULL, while the
+-- student's chosen Friday exam_type is stored on reservations.
+
+-- 1. Friday flexible slots need NULL exam_type.
+alter table public.time_slots
+  alter column exam_type drop not null;
+
+-- 2. Existing databases may still have the old per-exam unique constraint.
+alter table public.time_slots
+  drop constraint if exists time_slots_day_time_type_key;
+
+-- 3. Add reservation exam_type if this database was created before that change.
+alter table public.reservations
+  add column if not exists exam_type public.exam_type;
+
+-- Backfill existing reservations from their slot. This preserves old rows
+-- before the NOT NULL is enforced.
+update public.reservations r
+set exam_type = ts.exam_type
+from public.time_slots ts
+where r.slot_id = ts.id
+  and r.exam_type is null
+  and ts.exam_type is not null;
+
+-- Existing flexible Friday reservations, if any, cannot be inferred. They must
+-- be reviewed manually before enforcing NOT NULL.
+do $$
+begin
+  if exists (select 1 from public.reservations where exam_type is null) then
+    raise exception 'Cannot enforce reservations.exam_type: existing rows need manual Friday exam_type backfill';
+  end if;
+end $$;
+
+alter table public.reservations
+  alter column exam_type set not null;
+
+-- 4. If old Friday TEF/TCF duplicate slot rows exist and are unreserved, keep one
+-- row and convert it to flexible. Stop if both duplicate rows are referenced by
+-- active/cancelled reservation history, because automatic merging would break
+-- foreign keys and audit history.
+do $$
+declare
+  duplicate_count int;
+begin
+  select count(*) into duplicate_count
+  from (
+    select slot_date, start_time
+    from public.time_slots
+    group by slot_date, start_time
+    having count(*) > 1
+  ) duplicates;
+
+  if duplicate_count > 0 and exists (
+    select 1
+    from public.time_slots a
+    join public.time_slots b
+      on a.slot_date = b.slot_date
+     and a.start_time = b.start_time
+     and a.id <> b.id
+    join public.reservations ra on ra.slot_id = a.id
+    join public.reservations rb on rb.slot_id = b.id
+  ) then
+    raise exception 'Cannot merge duplicate Friday slots automatically: duplicate rows have reservation history';
+  end if;
+end $$;
+
+with ranked_slots as (
+  select
+    ts.id,
+    row_number() over (
+      partition by ts.slot_date, ts.start_time
+      order by
+        exists (select 1 from public.reservations r where r.slot_id = ts.id) desc,
+        ts.id
+    ) as keep_rank
+  from public.time_slots ts
+)
+delete from public.time_slots doomed
+using ranked_slots ranked
+where doomed.id = ranked.id
+  and ranked.keep_rank > 1
+  and not exists (
+    select 1 from public.reservations r where r.slot_id = doomed.id
+  );
+
+update public.time_slots
+set exam_type = null
+where extract(isodow from slot_date) = 5;
+
+-- 5. New idempotency key used by the CSV generator.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'time_slots_day_time_key'
+      and conrelid = 'public.time_slots'::regclass
+  ) then
+    alter table public.time_slots
+      add constraint time_slots_day_time_key unique (slot_date, start_time);
+  end if;
+end $$;

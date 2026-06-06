@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
 
     # Default timezone for scheduling (IANA name, e.g. America/Toronto).
-    timezone: str = "UTC"
+    timezone: str = "America/Toronto"
 
     # Admin bootstrap credentials, read by scripts/seed_admin.py only.
     # NEVER hardcoded or committed (PROJECT_SPEC §2).

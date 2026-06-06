@@ -14,6 +14,7 @@ export function BrandHeader() {
         height={80}
         className="brand-logo"
         priority
+        unoptimized
       />
       <div className="tricolore" />
     </div>

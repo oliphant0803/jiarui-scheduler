@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jiarui Rservation",
+  title: "Jiarui Online Study Platform",
   description: "Book exam-prep",
   icons: {
     icon: "/jiarui.png",

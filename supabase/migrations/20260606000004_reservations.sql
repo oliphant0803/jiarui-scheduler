@@ -7,6 +7,9 @@ create table if not exists public.reservations (
   slot_id    uuid not null references public.time_slots (id) on delete cascade,
   student_id uuid not null references public.profiles (id)   on delete cascade,
   topic      public.reservation_topic   not null,
+  -- Resolved server-side from time_slots.exam_type for Mon-Thu; required from
+  -- the student only for Friday flexible slots (PROJECT_SPEC §0.2 / §6).
+  exam_type  public.exam_type           not null,
   status     public.reservation_status  not null default 'active',
   -- Denormalized from time_slots.slot_date so the one-per-day partial unique
   -- index below can be expressed on this table. Maintained by a trigger; never
@@ -33,12 +36,17 @@ security definer
 set search_path = public
 as $$
 begin
-  select ts.slot_date into new.slot_date
+  select ts.slot_date, coalesce(ts.exam_type, new.exam_type)
+    into new.slot_date, new.exam_type
   from public.time_slots ts
   where ts.id = new.slot_id;
 
   if new.slot_date is null then
     raise exception 'invalid slot_id: %', new.slot_id;
+  end if;
+
+  if new.exam_type is null then
+    raise exception 'exam_type is required for flexible Friday slots';
   end if;
 
   -- FCFS tiebreaker is set by the server, ignoring any client-supplied value.
@@ -50,9 +58,10 @@ begin
 end;
 $$;
 
+drop trigger if exists reservations_set_slot_fields on public.reservations;
 drop trigger if exists reservations_set_slot_date on public.reservations;
-create trigger reservations_set_slot_date
-  before insert or update of slot_id on public.reservations
+create trigger reservations_set_slot_fields
+  before insert or update of slot_id, exam_type on public.reservations
   for each row execute function public.set_reservation_slot_date();
 
 -- ---------------------------------------------------------------------------

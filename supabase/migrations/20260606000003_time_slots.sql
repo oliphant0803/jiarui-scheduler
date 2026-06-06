@@ -4,22 +4,23 @@
 -- Slot generation rules (for the weekly job, not enforced here):
 --   Mon & Tue  TEF  18:30-20:30  -> 4 x 30min slots
 --   Wed & Thu  TCF  18:00-21:00  -> 6 x 30min slots
---   Fri        TEF AND TCF  18:00-21:00 -> 6 slots; student picks the exam_type
---              when booking. Friday is the only day with both types at the same
---              start_time, which is why the UNIQUE below includes exam_type.
+--   Fri        exam_type NULL  18:00-21:00 -> 6 x 30min slots; student picks
+--              TEF or TCF when booking. The chosen type is stored on the
+--              reservation, not fixed on the generated slot.
 
 create table if not exists public.time_slots (
   id         uuid primary key default gen_random_uuid(),
   slot_date  date not null,
   start_time time not null,
   end_time   time not null,
-  exam_type  public.exam_type not null,
+  -- NULL only for Friday flexible slots (PROJECT_SPEC §0.2 / §6).
+  exam_type  public.exam_type,
   -- Monday of the target week this slot belongs to (for weekly cycling, §4).
   week_start date not null,
   created_at timestamptz not null default now(),
-  -- One row per (day, start_time, exam_type). Friday can hold a TEF *and* a TCF
-  -- row at the same start_time; all other days have a single exam_type per day.
-  constraint time_slots_day_time_type_key unique (slot_date, start_time, exam_type)
+  -- One generated slot per day/start. Friday's exam choice is made later on
+  -- reservations, so re-running the generator no-ops on this key.
+  constraint time_slots_day_time_key unique (slot_date, start_time)
 );
 
 create index if not exists time_slots_week_start_idx on public.time_slots (week_start);

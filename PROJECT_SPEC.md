@@ -138,7 +138,7 @@ the booking week before it is **Jun 1 – Jun 5**.
   visible but cannot be reserved.
 
 ### Phase 2 — one-per-day (open leftovers)
-- **When:** Thursday 12:00 → the following Monday 12:00.
+- **When:** Thursday 12:00 → the Saturday 12:00.
   (Example: Thu Jun 4 noon → Mon Jun 8 noon.)
 - Target-week slots remain visible.
 - The single-total cap is lifted. A student may now hold up to **one slot per day** for

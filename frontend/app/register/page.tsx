@@ -146,7 +146,7 @@ export default function RegisterPage() {
 
         <div className="owl-note" role="note">
           <Image
-            src="/logo.png"
+            src="/web.png"
             alt=""
             width={44}
             height={44}
@@ -163,25 +163,31 @@ export default function RegisterPage() {
               {zh ? "EN" : "中文"}
             </button>
             {zh ? (
-              <ul className="owl-note-list">
-                <li>
-                  <strong>姓名、邮箱、微信号</strong> 是我们核对预约的关键信息。
-                </li>
-                <li>
-                  请 <strong>仔细填写并确认无误</strong>，注册后不易更改。
-                </li>
-              </ul>
+              <>
+                <p className="owl-note-head">咕咕！飞走之前，听我一句——</p>
+                <ul className="owl-note-list">
+                  <li>
+                    <strong>姓名、邮箱、微信号</strong> 是我们核对预约的关键信息。
+                  </li>
+                  <li>
+                    请 <strong>仔细填写并确认无误</strong>，注册后不易更改。
+                  </li>
+                </ul>
+              </>
             ) : (
-              <ul className="owl-note-list">
-                <li>
-                  Your <strong>name, email, and WeChat ID</strong> are how we
-                  match you to your reservation.
-                </li>
-                <li>
-                  <strong>Double-check them</strong> — they can&apos;t be easily
-                  changed later.
-                </li>
-              </ul>
+              <>
+                <p className="owl-note-head">Hoot! Before you fly off —</p>
+                <ul className="owl-note-list">
+                  <li>
+                    Your <strong>name, email, and WeChat ID</strong> are how we
+                    match you to your reservation.
+                  </li>
+                  <li>
+                    <strong>Double-check them</strong> — they can&apos;t be
+                    easily changed later.
+                  </li>
+                </ul>
+              </>
             )}
           </div>
         </div>

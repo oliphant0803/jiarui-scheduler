@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 UserRole = Literal["student", "admin"]
+ExamType = Literal["TEF", "TCF"]
+ReservationTopic = Literal["Listening", "Speaking", "Reading", "Writing"]
 
 
 class Profile(BaseModel):
@@ -35,3 +37,31 @@ class CurrentUser(BaseModel):
     email: Optional[str] = None
     role: UserRole
     profile: Profile
+
+
+class ReservationCreate(BaseModel):
+    """Client payload for POST /reservations.
+
+    Extra fields are ignored on purpose: PROJECT_SPEC §6 says the client sends
+    only slot_id, topic, and Friday-only exam_type. Nothing else is trusted.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    slot_id: str
+    topic: ReservationTopic
+    exam_type: Optional[ExamType] = None
+
+
+class ReservationOut(BaseModel):
+    id: str
+    slot_id: str
+    student_id: str
+    topic: ReservationTopic
+    exam_type: ExamType
+    status: Literal["active", "cancelled"]
+    slot_date: date
+    created_at: datetime
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    week_start: Optional[date] = None
