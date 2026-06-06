@@ -86,6 +86,27 @@ body {
   box-shadow: 0 1px 2px rgba(20, 33, 61, 0.04), 0 12px 32px rgba(20, 33, 61, 0.06);
 }
 
+/* Wider card for forms with two columns of fields (e.g. registration), so it
+   stays horizontal and fits without scrolling. */
+.card-wide {
+  max-width: 40rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1.1rem;
+}
+
+@media (max-width: 34rem) {
+  .card-wide {
+    max-width: 26rem;
+  }
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .card-title {
   font-size: 1.5rem;
   font-weight: 650;
@@ -111,6 +132,11 @@ body {
   font-size: 0.82rem;
   font-weight: 550;
   color: var(--ink);
+}
+
+.label-zh {
+  color: var(--muted);
+  font-weight: 450;
 }
 
 .input {
@@ -285,12 +311,11 @@ body {
 
 .owl-note-bubble {
   position: relative;
+  flex: 1;
   background: rgba(0, 85, 164, 0.06);
   border: 1px solid rgba(0, 85, 164, 0.2);
   border-radius: 11px;
   padding: 0.7rem 0.85rem;
-  font-size: 0.82rem;
-  line-height: 1.5;
   color: var(--ink);
 }
 
@@ -308,9 +333,43 @@ body {
   transform: rotate(45deg);
 }
 
-.owl-note-bubble strong {
-  font-weight: 600;
+.owl-note-list {
+  margin: 0;
+  padding-left: 1.05rem;
+  padding-right: 2.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.owl-note-list li {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.owl-note-list strong {
+  font-weight: 650;
   color: var(--bleu-deep);
+}
+
+.owl-lang-toggle {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 8px;
+  border: 1px solid rgba(0, 85, 164, 0.3);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--bleu);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.owl-lang-toggle:hover {
+  background: var(--bleu);
+  color: #fff;
 }
 
 .brand {

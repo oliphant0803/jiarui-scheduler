@@ -22,6 +22,7 @@ export default function RegisterPage() {
     confirm: "",
   });
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [zh, setZh] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -138,7 +139,7 @@ export default function RegisterPage() {
 
   return (
     <main className="auth-wrap">
-      <form className="card" onSubmit={onSubmit} noValidate>
+      <form className="card card-wide" onSubmit={onSubmit} noValidate>
         <BrandHeader />
         <h1 className="card-title">Create your account</h1>
         <p className="card-sub">Register to reserve exam-prep office hours.</p>
@@ -152,68 +153,99 @@ export default function RegisterPage() {
             className="owl-note-avatar"
             aria-hidden="true"
           />
-          <p className="owl-note-bubble">
-            <strong>Hoot! A wise word before you fly off —</strong> your{" "}
-            <strong>full name</strong>, <strong>email</strong>, and{" "}
-            <strong>WeChat ID</strong> are the three keys I use to match you to
-            your reservations. Enter them carefully and exactly as you&apos;ll
-            use them; a typo here can leave a booking with no owl to deliver it
-            to. 🌿
-          </p>
+          <div className="owl-note-bubble">
+            <button
+              type="button"
+              className="owl-lang-toggle"
+              onClick={() => setZh((v) => !v)}
+              aria-label={zh ? "Switch to English" : "切换到中文"}
+            >
+              {zh ? "EN" : "中文"}
+            </button>
+            {zh ? (
+              <ul className="owl-note-list">
+                <li>
+                  <strong>姓名、邮箱、微信号</strong> 是我们核对预约的关键信息。
+                </li>
+                <li>
+                  请 <strong>仔细填写并确认无误</strong>，注册后不易更改。
+                </li>
+              </ul>
+            ) : (
+              <ul className="owl-note-list">
+                <li>
+                  Your <strong>name, email, and WeChat ID</strong> are how we
+                  match you to your reservation.
+                </li>
+                <li>
+                  <strong>Double-check them</strong> — they can&apos;t be easily
+                  changed later.
+                </li>
+              </ul>
+            )}
+          </div>
         </div>
 
         {generalError && <div className="alert alert-error">{generalError}</div>}
 
-        <Field
-          label="Email"
-          type="email"
-          value={form.email}
-          onChange={update("email")}
-          error={errors.email}
-          placeholder="you@example.com"
-          autoComplete="email"
-        />
-        <Field
-          label="Legal full name"
-          value={form.fullName}
-          onChange={update("fullName")}
-          error={errors.fullName}
-          placeholder="As on your ID"
-          autoComplete="name"
-        />
-        <Field
-          label="Phone number"
-          value={form.phone}
-          onChange={update("phone")}
-          error={errors.phone}
-          placeholder="+1 416 555 0123"
-          autoComplete="tel"
-        />
-        <Field
-          label="WeChat ID"
-          value={form.wechat}
-          onChange={update("wechat")}
-          error={errors.wechat}
-          placeholder="your_wechat_id"
-        />
-        <Field
-          label="Password"
-          type="password"
-          value={form.password}
-          onChange={update("password")}
-          error={errors.password}
-          placeholder="At least 8 characters"
-          autoComplete="new-password"
-        />
-        <Field
-          label="Confirm password"
-          type="password"
-          value={form.confirm}
-          onChange={update("confirm")}
-          error={errors.confirm}
-          placeholder="Re-enter your password"
-          autoComplete="new-password"
-        />
+        <div className="field-grid">
+          <Field
+            label="Legal full name"
+            labelZh="姓名"
+            value={form.fullName}
+            onChange={update("fullName")}
+            error={errors.fullName}
+            placeholder="As on your ID"
+            autoComplete="name"
+          />
+          <Field
+            label="Email"
+            labelZh="邮箱"
+            type="email"
+            value={form.email}
+            onChange={update("email")}
+            error={errors.email}
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
+          <Field
+            label="Phone number"
+            labelZh="电话号码"
+            value={form.phone}
+            onChange={update("phone")}
+            error={errors.phone}
+            placeholder="+1 416 555 0123"
+            autoComplete="tel"
+          />
+          <Field
+            label="WeChat ID"
+            labelZh="微信号"
+            value={form.wechat}
+            onChange={update("wechat")}
+            error={errors.wechat}
+            placeholder="your_wechat_id"
+          />
+          <Field
+            label="Password"
+            labelZh="密码"
+            type="password"
+            value={form.password}
+            onChange={update("password")}
+            error={errors.password}
+            placeholder="At least 8 characters"
+            autoComplete="new-password"
+          />
+          <Field
+            label="Confirm password"
+            labelZh="确认密码"
+            type="password"
+            value={form.confirm}
+            onChange={update("confirm")}
+            error={errors.confirm}
+            placeholder="Re-enter your password"
+            autoComplete="new-password"
+          />
+        </div>
 
         <button className="btn btn-primary" type="submit" disabled={loading}>
           {loading ? "Creating account…" : "Create account"}
@@ -229,11 +261,13 @@ export default function RegisterPage() {
 
 function Field({
   label,
+  labelZh,
   error,
   type,
   ...props
 }: {
   label: string;
+  labelZh?: string;
   error?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   const [reveal, setReveal] = useState(false);
@@ -242,7 +276,10 @@ function Field({
 
   return (
     <div className="field">
-      <label className="label">{label}</label>
+      <label className="label">
+        {label}
+        {labelZh && <span className="label-zh"> / {labelZh}</span>}
+      </label>
       <div className={isPassword ? "input-reveal" : undefined}>
         <input
           className="input"
