@@ -146,7 +146,7 @@ export default function RegisterPage() {
 
         <div className="owl-note" role="note">
           <Image
-            src="/web.png"
+            src="/logo.png"
             alt=""
             width={44}
             height={44}
