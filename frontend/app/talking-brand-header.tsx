@@ -5,12 +5,21 @@ import { useState } from "react";
 
 import type { BookingPhase } from "./calendar-data";
 
+type ReservationLite = {
+  dayLabel: string;
+  start: string;
+  topic: string;
+  examType: string;
+};
+
 type Props = {
   phase: BookingPhase;
   loggedIn: boolean;
+  reservations?: ReservationLite[];
+  comeBackLabel?: string;
 };
 
-export function TalkingBrandHeader({ phase, loggedIn }: Props) {
+export function TalkingBrandHeader({ phase, loggedIn, reservations = [], comeBackLabel }: Props) {
   const [zh, setZh] = useState(false);
 
   return (
@@ -38,17 +47,74 @@ export function TalkingBrandHeader({ phase, loggedIn }: Props) {
         </button>
 
         <p className="talking-brand-kicker">{zh ? "猫头鹰提醒" : "Owl note"}</p>
-        {zh ? <ChineseMessage phase={phase} loggedIn={loggedIn} /> : <EnglishMessage phase={phase} loggedIn={loggedIn} />}
+        {zh ? (
+          <ChineseMessage
+            phase={phase}
+            loggedIn={loggedIn}
+            reservations={reservations}
+            comeBackLabel={comeBackLabel}
+          />
+        ) : (
+          <EnglishMessage
+            phase={phase}
+            loggedIn={loggedIn}
+            reservations={reservations}
+            comeBackLabel={comeBackLabel}
+          />
+        )}
       </div>
     </header>
   );
 }
 
-function EnglishMessage({ phase, loggedIn }: Props) {
+function summarize(reservations: ReservationLite[], zh = false): string {
+  const first = reservations[0];
+  const base = `${first.dayLabel} · ${first.start} (${first.examType} ${first.topic})`;
+  if (reservations.length === 1) return base;
+  const more = reservations.length - 1;
+  return zh ? `${base} 等 ${reservations.length} 个` : `${base} +${more} more`;
+}
+
+function EnglishMessage({ phase, loggedIn, reservations = [], comeBackLabel }: Props) {
   if (!loggedIn) {
     return (
       <p className="talking-brand-text">
         Please <strong>log in first</strong> to book a timeslot.
+      </p>
+    );
+  }
+
+  if (reservations.length > 0) {
+    // Phase 1 (Mon noon–Wed noon): one pick for the whole week — fully locked.
+    if (phase === "phase1") {
+      return (
+        <p className="talking-brand-text">
+          You have <strong>{summarize(reservations)}</strong>. That is your one pick
+          this week — please come back <strong>{comeBackLabel ?? "Thursday"} at noon</strong>{" "}
+          to book another.
+        </p>
+      );
+    }
+    if (phase === "phase2") {
+      return (
+        <p className="talking-brand-text">
+          You have <strong>{summarize(reservations)}</strong>. You can still book{" "}
+          <strong>one slot per remaining day</strong>.
+        </p>
+      );
+    }
+    if (phase === "gap") {
+      return (
+        <p className="talking-brand-text">
+          You have <strong>{summarize(reservations)}</strong>. Booking is{" "}
+          <strong>paused until Thursday noon</strong>.
+        </p>
+      );
+    }
+    return (
+      <p className="talking-brand-text">
+        You have <strong>{summarize(reservations)}</strong>. Booking reopens{" "}
+        <strong>Monday at noon</strong>.
       </p>
     );
   }
@@ -88,11 +154,44 @@ function EnglishMessage({ phase, loggedIn }: Props) {
   );
 }
 
-function ChineseMessage({ phase, loggedIn }: Props) {
+function ChineseMessage({ phase, loggedIn, reservations = [], comeBackLabel }: Props) {
   if (!loggedIn) {
     return (
       <p className="talking-brand-text">
         请先 <strong>登录</strong>，然后才能预约时间。
+      </p>
+    );
+  }
+
+  if (reservations.length > 0) {
+    if (phase === "phase1") {
+      return (
+        <p className="talking-brand-text">
+          你已预约 <strong>{summarize(reservations, true)}</strong>。本周只能选择一个时间段，
+          请在 <strong>{comeBackLabel ?? "周四"} 中午</strong> 回来预约其他日期。
+        </p>
+      );
+    }
+    if (phase === "phase2") {
+      return (
+        <p className="talking-brand-text">
+          你已预约 <strong>{summarize(reservations, true)}</strong>。剩余日期仍可
+          <strong>每天预约一个时间段</strong>。
+        </p>
+      );
+    }
+    if (phase === "gap") {
+      return (
+        <p className="talking-brand-text">
+          你已预约 <strong>{summarize(reservations, true)}</strong>。预约
+          <strong>暂停到周四中午</strong>。
+        </p>
+      );
+    }
+    return (
+      <p className="talking-brand-text">
+        你已预约 <strong>{summarize(reservations, true)}</strong>。预约将在
+        <strong>周一中午</strong> 重新开放。
       </p>
     );
   }

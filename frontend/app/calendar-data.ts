@@ -83,7 +83,7 @@ function dateFromKey(key: string) {
   return new Date(Date.UTC(year, month - 1, day, 12));
 }
 
-function addDays(key: string, days: number) {
+export function addDays(key: string, days: number) {
   const next = new Date(dateFromKey(key).getTime() + days * DAY_MS);
   return next.toISOString().slice(0, 10);
 }

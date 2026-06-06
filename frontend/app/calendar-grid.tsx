@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -16,16 +17,26 @@ import {
   timeToMinutes,
 } from "./calendar-data";
 
+export type MyReservation = {
+  dayKey: string;
+  start: string;
+  topic: string;
+  examType: string;
+  dayLabel: string;
+};
+
 type Props = {
   slots: CalendarSlot[];
   editable: boolean;
+  myReservations?: MyReservation[];
   studentIdentity?: {
     fullName: string | null;
     wechat: string | null;
   };
 };
 
-export function CalendarGrid({ slots, editable, studentIdentity }: Props) {
+export function CalendarGrid({ slots, editable, myReservations = [], studentIdentity }: Props) {
+  const router = useRouter();
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [topic, setTopic] = useState<Topic>("Speaking");
@@ -38,6 +49,21 @@ export function CalendarGrid({ slots, editable, studentIdentity }: Props) {
   const canBook = editable && (phase === "phase1" || phase === "phase2");
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId) ?? null;
   const hasReservationIdentity = Boolean(studentIdentity?.fullName && studentIdentity?.wechat);
+
+  // Reflect the student's own reservations and the per-phase booking limits:
+  //  - a slot the student already booked is "mine" (highlighted, not bookable);
+  //  - phase 1 (Mon noon–Wed noon) allows ONE booking for the whole week, so any
+  //    existing reservation locks every other slot;
+  //  - phase 2 allows one per day, so a day with a reservation locks that day.
+  const mineKeys = useMemo(
+    () => new Set(myReservations.map((r) => `${r.dayKey} ${r.start}`)),
+    [myReservations],
+  );
+  const reservedDays = useMemo(
+    () => new Set(myReservations.map((r) => r.dayKey)),
+    [myReservations],
+  );
+  const weekLocked = phase === "phase1" && myReservations.length > 0;
 
   function selectSlot(slotId: string) {
     setSelectedSlotId(slotId);
@@ -154,6 +180,9 @@ export function CalendarGrid({ slots, editable, studentIdentity }: Props) {
 
       setSubmitMessage("Reserved. Your slot is saved.");
       setSelectedSlotId(null);
+      // Re-render the server component so the new reservation is reflected in
+      // the grid (marked "mine") and the booking limits lock accordingly.
+      router.refresh();
     } catch {
       setSubmitError("Could not reach the reservation server.");
     } finally {
@@ -184,23 +213,36 @@ export function CalendarGrid({ slots, editable, studentIdentity }: Props) {
                 }
 
                 const isSelected = selectedSlotId === slot.id;
+                const isMine = mineKeys.has(`${slot.dayKey} ${slot.start}`);
+                const dayLocked = !isMine && reservedDays.has(slot.dayKey);
+                const lockedOut = !isMine && (weekLocked || dayLocked);
+                const selectable = canBook && !isMine && !lockedOut;
                 const label = slot.flexible ? "TEF / TCF" : slot.examType;
+
+                const statusText = isMine
+                  ? "✓ Your booking"
+                  : !editable
+                    ? "Open"
+                    : lockedOut
+                      ? "Locked"
+                      : canBook
+                        ? "Select time"
+                        : "View only";
+
                 return (
                   <button
                     type="button"
                     key={slot.id}
-                    className={`calendar-slot ${isSelected ? "is-selected" : ""}`}
-                    data-exam={slot.examType ?? "FLEX"}
-                    onClick={() => canBook && selectSlot(slot.id)}
-                    disabled={!canBook}
+                    className={`calendar-slot ${isSelected ? "is-selected" : ""} ${isMine ? "is-mine" : ""} ${lockedOut ? "is-locked" : ""}`}
+                    data-exam={isMine ? "MINE" : slot.examType ?? "FLEX"}
+                    onClick={() => selectable && selectSlot(slot.id)}
+                    disabled={!selectable}
                   >
                     <span className="slot-time">
                       {slot.start} - {slot.end}
                     </span>
                     <span className="slot-type">{label}</span>
-                    <span className="slot-status">
-                      {editable ? (canBook ? "Select time" : "View only") : "Open"}
-                    </span>
+                    <span className="slot-status">{statusText}</span>
                   </button>
                 );
               })}

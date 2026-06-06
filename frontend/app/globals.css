@@ -1288,6 +1288,33 @@ body {
   background: rgba(110, 86, 168, 0.12);
 }
 
+/* The student's own booking — unmistakable green "yours" state. */
+.calendar-slot.is-mine,
+.calendar-slot.is-mine:disabled {
+  background: rgba(31, 157, 85, 0.16);
+  box-shadow: inset 5px 0 0 #1f9d55;
+  cursor: default;
+}
+
+.calendar-slot.is-mine .slot-type {
+  color: #14211d;
+  font-weight: 750;
+}
+
+.calendar-slot.is-mine .slot-status {
+  color: #157347;
+  font-weight: 800;
+}
+
+/* Slots the student can't book right now (phase-1 week lock or same-day lock). */
+.calendar-slot.is-locked:disabled {
+  opacity: 0.55;
+}
+
+.calendar-slot.is-locked .slot-status {
+  color: var(--muted);
+}
+
 .booking-popover {
   position: fixed;
   right: 1.25rem;
