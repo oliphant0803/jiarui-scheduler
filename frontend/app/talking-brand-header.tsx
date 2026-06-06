@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 import type { BookingPhase } from "./calendar-data";
+import Link from "next/dist/client/link";
 
 type ReservationLite = {
   dayLabel: string;
@@ -99,7 +100,10 @@ function EnglishMessage({
   if (!loggedIn) {
     return (
       <p className="talking-brand-text">
-        Please <strong>log in first</strong> to book a timeslot.
+        For instructors to view all the reservations, but no edit. Student, please 
+        <Link href="/reservation" className="btn compact-action talking-brand-text"> 
+          <strong>log in first</strong>
+          </Link> to book a timeslot.
       </p>
     );
   }
@@ -195,7 +199,9 @@ function ChineseMessage({
   if (!loggedIn) {
     return (
       <p className="talking-brand-text">
-        请先 <strong>登录</strong>，然后才能预约时间。
+        请先 <Link href="/reservation" className="btn compact-action talking-brand-text"> 
+          <strong>登陆</strong>
+          </Link>，然后才能预约时间。
       </p>
     );
   }

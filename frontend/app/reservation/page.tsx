@@ -57,6 +57,28 @@ export default async function ReservationPage() {
     .gte("slot_date", startKey)
     .lte("slot_date", endKey);
 
+  // Fetch which slots are booked by any student (without revealing who booked them)
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  let bookedSlotKeys = new Set<string>();
+  try {
+    const bookedResponse = await fetch(`${apiBase}/slots/booked?start_date=${startKey}&end_date=${endKey}`, {
+      headers: {
+        Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ""}`,
+      },
+    });
+    if (bookedResponse.ok) {
+      const bookedData = await bookedResponse.json();
+      // Create a set of "dayKey time" keys for quick lookup
+      bookedSlotKeys = new Set(
+        (bookedData.booked_slots ?? []).map((slot: { slot_date: string; start_time: string }) =>
+          `${slot.slot_date} ${slot.start_time.slice(0, 5)}`
+        )
+      );
+    }
+  } catch {
+    // If the API call fails, continue without booked slots info
+  }
+
   const myReservations: MyReservation[] = (reservationRows ?? []).map((row) => {
     const ts = row.time_slots as unknown as { start_time?: string } | { start_time?: string }[] | null;
     const startTime = Array.isArray(ts) ? ts[0]?.start_time : ts?.start_time;
@@ -114,6 +136,7 @@ export default async function ReservationPage() {
           slots={slots}
           editable
           myReservations={myReservations}
+          bookedSlotKeys={Array.from(bookedSlotKeys)}
           studentIdentity={{
             fullName: profile?.full_name ?? null,
             wechat: profile?.wechat ?? null,

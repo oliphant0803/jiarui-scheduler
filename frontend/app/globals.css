@@ -1311,6 +1311,20 @@ body {
   font-weight: 800;
 }
 
+/* Ensure "your booking" always displays in blue, even in edge cases */
+.calendar-slot.is-mine.is-booked,
+.calendar-slot.is-mine.is-booked:disabled {
+  background: rgba(0, 85, 164, 0.82);
+  box-shadow: inset 6px 0 0 var(--bleu-deep);
+}
+
+.calendar-slot.is-mine.is-booked .slot-time,
+.calendar-slot.is-mine.is-booked .slot-type,
+.calendar-slot.is-mine.is-booked .slot-status {
+  color: #ffffff;
+  font-weight: 800;
+}
+
 /* Slots the student can't book right now (phase-1 week lock or same-day lock):
    clearly greyed out and inert. */
 .calendar-slot.is-locked,
@@ -1325,6 +1339,45 @@ body {
 .calendar-slot.is-locked .slot-status {
   color: #b3b7be;
   font-weight: 600;
+}
+
+/* Slots booked by other students: same appearance as locked. */
+.calendar-slot.is-booked,
+.calendar-slot.is-booked:disabled {
+  background: #f1f2f4;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.calendar-slot.is-booked .slot-time,
+.calendar-slot.is-booked .slot-type,
+.calendar-slot.is-booked .slot-status {
+  color: #b3b7be;
+  font-weight: 600;
+}
+
+/* Admin/public view booked slots: more prominent with student name displayed. */
+.calendar-slot.admin-slot.is-reserved,
+.calendar-slot.admin-slot.is-reserved:disabled {
+  background: rgba(239, 65, 53, 0.12);
+  box-shadow: inset 3px 0 0 rgba(239, 65, 53, 0.6);
+  cursor: pointer;
+}
+
+.calendar-slot.admin-slot.is-reserved .slot-time,
+.calendar-slot.admin-slot.is-reserved .slot-type,
+.calendar-slot.admin-slot.is-reserved .slot-status {
+  color: #c5281c;
+  font-weight: 650;
+}
+
+.calendar-slot.admin-slot.is-reserved .slot-type {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.calendar-slot.admin-slot.is-reserved:hover {
+  background: rgba(239, 65, 53, 0.16);
 }
 
 .booking-popover {

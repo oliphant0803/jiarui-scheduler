@@ -10,10 +10,42 @@ import {
 } from "../calendar-data";
 import { TalkingBrandHeader } from "../talking-brand-header";
 
+type ReservationInfo = {
+  id: string;
+  slot_date: string;
+  start_time: string;
+  end_time: string;
+  topic: string;
+  exam_type: string;
+  student_name: string | null;
+  student_wechat: string | null;
+};
+
 export async function CalendarViewContent() {
   const now = getCalendarNow();
   const slots = await loadCalendarSlots(now);
   const phase = getBookingPhase(now);
+
+  // Fetch reservations with student info from the API
+  const startKey = slots[0]?.dayKey ?? "";
+  const endKey = slots[slots.length - 1]?.dayKey ?? "";
+  let reservations: ReservationInfo[] = [];
+  let bookedSlotKeys: string[] = [];
+
+  try {
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+    const response = await fetch(`${apiBase}/calendar-view/reservations?start_date=${startKey}&end_date=${endKey}`);
+    if (response.ok) {
+      const data = await response.json();
+      reservations = data.reservations ?? [];
+      bookedSlotKeys = (data.reservations ?? []).map(
+        (res: ReservationInfo) =>
+          `${res.slot_date} ${res.start_time.slice(0, 5)}`
+      );
+    }
+  } catch {
+    // If the API call fails, continue without reservation data
+  }
 
   return (
     <main className="scheduler-page">
@@ -27,12 +59,15 @@ export async function CalendarViewContent() {
               {weekRangeLabel(slots)} · read-only next-week schedule
             </p>
           </div>
-          <Link href="/reservation" className="btn compact-action">
-            Book a slot
-          </Link>
         </div>
 
-        <CalendarGrid slots={slots} editable={false} />
+        <CalendarGrid
+          slots={slots}
+          editable={false}
+          bookedSlotKeys={bookedSlotKeys}
+          reservationsInfo={reservations}
+          isPublicView={true}
+        />
       </section>
     </main>
   );

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { AdminAccountMenu } from "../admin-account-menu";
+import { AdminReservationCalendar } from "./admin-reservation-calendar";
 import { AdminSlotTools } from "./admin-slot-tools";
 
 export default async function ManagePage() {
@@ -31,19 +31,21 @@ export default async function ManagePage() {
         <div className="scheduler-topbar">
           <div>
             <p className="eyebrow">Admin tools</p>
-            <h1>Manage time slots</h1>
+            <h1>Manage</h1>
             <p className="scheduler-sub">
-              Generate slots from the CSV schedule and clean up fully past months.
+              Review who reserved each slot for the upcoming week, and manage the
+              CSV-generated time slots.
             </p>
           </div>
           <div className="topbar-actions">
-            <Link href="/manage/reservations" className="secondary-link">
-              Reservations calendar →
-            </Link>
             <AdminAccountMenu />
           </div>
         </div>
 
+        <h2 className="admin-section-title">Reservations</h2>
+        <AdminReservationCalendar />
+
+        <h2 className="admin-section-title admin-section-title-spaced">Time slots</h2>
         <AdminSlotTools />
       </section>
     </main>

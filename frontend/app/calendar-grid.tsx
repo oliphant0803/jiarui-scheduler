@@ -25,20 +25,35 @@ export type MyReservation = {
   dayLabel: string;
 };
 
+type ReservationInfo = {
+  id: string;
+  slot_date: string;
+  start_time: string;
+  end_time: string;
+  topic: string;
+  exam_type: string;
+  student_name: string | null;
+  student_wechat: string | null;
+};
+
 type Props = {
   slots: CalendarSlot[];
   editable: boolean;
   myReservations?: MyReservation[];
+  bookedSlotKeys?: string[];
+  reservationsInfo?: ReservationInfo[];
+  isPublicView?: boolean;
   studentIdentity?: {
     fullName: string | null;
     wechat: string | null;
   };
 };
 
-export function CalendarGrid({ slots, editable, myReservations = [], studentIdentity }: Props) {
+export function CalendarGrid({ slots, editable, myReservations = [], bookedSlotKeys = [], reservationsInfo = [], isPublicView = false, studentIdentity }: Props) {
   const router = useRouter();
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [selectedReservationInfo, setSelectedReservationInfo] = useState<ReservationInfo | null>(null);
   const [topic, setTopic] = useState<Topic>("Speaking");
   const [examType, setExamType] = useState<ExamType>("TEF");
   const [identityConfirmed, setIdentityConfirmed] = useState(false);
@@ -50,6 +65,16 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
   const canBook = editable && (phase === "phase1" || phase === "phase2");
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId) ?? null;
   const hasReservationIdentity = Boolean(studentIdentity?.fullName && studentIdentity?.wechat);
+
+  // Create a map of reservations by slot key for quick lookup
+  const reservationsBySlotKey = useMemo(() => {
+    const map = new Map<string, ReservationInfo>();
+    for (const res of reservationsInfo) {
+      const key = `${res.slot_date} ${res.start_time.slice(0, 5)}`;
+      map.set(key, res);
+    }
+    return map;
+  }, [reservationsInfo]);
 
   // Reflect the student's own reservations and the per-phase booking limits:
   //  - a slot the student already booked is "mine" (highlighted, not bookable);
@@ -76,17 +101,18 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
   }
 
   useEffect(() => {
-    if (!selectedSlot) return;
+    if (!selectedSlot && !selectedReservationInfo) return;
 
     function onPointerDown(event: PointerEvent) {
       const target = event.target as Node;
       if (popoverRef.current?.contains(target)) return;
       setSelectedSlotId(null);
+      setSelectedReservationInfo(null);
     }
 
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [selectedSlot]);
+  }, [selectedSlot, selectedReservationInfo]);
 
   const days = useMemo(() => {
     const grouped = new Map<string, CalendarSlot[]>();
@@ -218,35 +244,65 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
                 const isSelected = selectedSlotId === slot.id;
                 const mine = mineByKey.get(`${slot.dayKey} ${slot.start}`);
                 const isMine = Boolean(mine);
+                const isBooked = bookedSlotKeys.includes(`${slot.dayKey} ${slot.start}`);
                 const dayLocked = !isMine && reservedDays.has(slot.dayKey);
-                const lockedOut = !isMine && (weekLocked || dayLocked);
+                const lockedOut = !isMine && (weekLocked || dayLocked || isBooked);
                 const selectable = canBook && !isMine && !lockedOut;
+                
+                // Get reservation info if slot is booked
+                const slotKey = `${slot.dayKey} ${slot.start}`;
+                const bookedReservation = reservationsBySlotKey.get(slotKey);
+                
                 // A booked slot shows the exam type the student actually confirmed
                 // (so a flexible Friday slot reads "TEF" or "TCF", not "TEF / TCF").
                 const label = mine
                   ? mine.examType
-                  : slot.flexible
-                    ? "TEF / TCF"
-                    : slot.examType;
+                  : isBooked && isPublicView && bookedReservation
+                    ? bookedReservation.student_name || "Booked"
+                    : slot.flexible
+                      ? "TEF / TCF"
+                      : slot.examType;
 
                 const statusText = isMine
                   ? "✓ Your booking"
-                  : !editable
-                    ? "Open"
-                    : lockedOut
-                      ? "Locked"
-                      : canBook
-                        ? "Select time"
-                        : "View only";
+                  : isBooked && isPublicView && bookedReservation
+                    ? `${bookedReservation.exam_type} · ${bookedReservation.topic}`
+                    : isBooked
+                      ? "Booked"
+                      : !editable
+                        ? "Open"
+                        : lockedOut
+                          ? "Locked"
+                          : canBook
+                            ? "Select time"
+                            : "View only";
+
+                const publicViewBooked = isBooked && isPublicView;
+                const classNames = `calendar-slot ${isSelected ? "is-selected" : ""} ${isMine ? "is-mine" : ""} ${publicViewBooked ? "admin-slot is-reserved" : isBooked ? "is-booked" : ""} ${lockedOut && !isBooked ? "is-locked" : ""}`;
 
                 return (
                   <button
                     type="button"
                     key={slot.id}
-                    className={`calendar-slot ${isSelected ? "is-selected" : ""} ${isMine ? "is-mine" : ""} ${lockedOut ? "is-locked" : ""}`}
+                    className={classNames}
                     data-exam={isMine ? "MINE" : slot.examType ?? "FLEX"}
-                    onClick={() => selectable && selectSlot(slot.id)}
-                    disabled={!selectable}
+                    onClick={() => {
+                      if (selectable) {
+                        selectSlot(slot.id);
+                      } else if (!editable && isBooked) {
+                        // In read-only mode, allow viewing booked slot info
+                        const resInfo = reservationsInfo.find(
+                          (r) =>
+                            r.slot_date === slot.dayKey &&
+                            r.start_time.slice(0, 5) === slot.start
+                        );
+                        if (resInfo) {
+                          setSelectedReservationInfo(resInfo);
+                          setSelectedSlotId(slot.id);
+                        }
+                      }
+                    }}
+                    disabled={!selectable && !((!editable && isBooked) || isMine)}
                   >
                     <span className="slot-time">
                       {slot.start} - {slot.end}
@@ -381,6 +437,68 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
               Reserve this slot
             </button>
           )}
+        </div>
+      )}
+
+      {!editable && selectedReservationInfo && (
+        <div
+          className="booking-popover"
+          role="dialog"
+          aria-label="Reservation details"
+          ref={popoverRef}
+        >
+          <div className="booking-popover-body">
+            <div className="booking-fields">
+              <div>
+                <p className="popover-kicker">Booked slot</p>
+                <h2>
+                  {dayLabel(new Date(Date.UTC(
+                    parseInt(selectedReservationInfo.slot_date.split("-")[0]),
+                    parseInt(selectedReservationInfo.slot_date.split("-")[1]) - 1,
+                    parseInt(selectedReservationInfo.slot_date.split("-")[2]),
+                    12
+                  )))} · {selectedReservationInfo.start_time.slice(0, 5)}
+                </h2>
+              </div>
+              <div className="field compact-field">
+                <span className="label">Topic</span>
+                <div className="input" style={{ padding: "0.625rem 0.75rem", background: "#f5f5f5" }}>
+                  {selectedReservationInfo.topic}
+                </div>
+              </div>
+              <div className="field compact-field">
+                <span className="label">Course</span>
+                <div className="input" style={{ padding: "0.625rem 0.75rem", background: "#f5f5f5" }}>
+                  {selectedReservationInfo.exam_type}
+                </div>
+              </div>
+            </div>
+
+            <aside className="reservation-identity-card">
+              <p className="popover-kicker">Student</p>
+              <dl>
+                <div>
+                  <dt>Full name</dt>
+                  <dd>{selectedReservationInfo.student_name || "N/A"}</dd>
+                </div>
+                <div>
+                  <dt>WeChat ID</dt>
+                  <dd>{selectedReservationInfo.student_wechat || "N/A"}</dd>
+                </div>
+              </dl>
+            </aside>
+          </div>
+
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={() => {
+              setSelectedReservationInfo(null);
+              setSelectedSlotId(null);
+            }}
+          >
+            Close
+          </button>
         </div>
       )}
     </div>

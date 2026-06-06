@@ -91,6 +91,55 @@ def cancel_current_user_reservation(
     return cancelled
 
 
+@app.get("/slots/booked")
+def get_booked_slots(
+    start_date: str,
+    end_date: str,
+    user: CurrentUser = Depends(get_current_user),
+) -> dict:
+    """Return list of booked slots (date and time) that are booked by any student in the date range.
+    
+    This is accessible to authenticated users so they can see which slots are
+    taken without revealing who booked them.
+    """
+    from datetime import date as dateclass
+    try:
+        start = dateclass.fromisoformat(start_date)
+        end = dateclass.fromisoformat(end_date)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date format. Use YYYY-MM-DD.",
+        )
+    
+    booked_slots = SupabaseReservationRepo().get_booked_slots(start, end)
+    return {"booked_slots": booked_slots}
+
+
+@app.get("/calendar-view/reservations")
+def get_calendar_view_reservations(
+    start_date: str,
+    end_date: str,
+) -> dict:
+    """Return all active reservations with basic student info for calendar view.
+    
+    This is publicly accessible (no authentication required) so anyone can see
+    which slots are booked and basic student information (name, wechat).
+    """
+    from datetime import date as dateclass
+    try:
+        start = dateclass.fromisoformat(start_date)
+        end = dateclass.fromisoformat(end_date)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date format. Use YYYY-MM-DD.",
+        )
+    
+    reservations = SupabaseReservationRepo().get_reservations_with_student_info(start, end)
+    return {"reservations": reservations}
+
+
 @app.post("/admin/time-slots/generate")
 def admin_generate_time_slots(
     user: CurrentUser = Depends(require_admin),

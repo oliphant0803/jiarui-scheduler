@@ -154,6 +154,86 @@ class SupabaseReservationRepo:
         rows = resp.data or []
         return flatten_reservation_row(rows[0]) if rows else None
 
+    def get_booked_slot_ids(self, start_date: date, end_date: date) -> list[str]:
+        """Return list of slot IDs that have active reservations in the date range."""
+        resp = (
+            self.client.table("reservations")
+            .select("slot_id")
+            .eq("status", "active")
+            .gte("slot_date", start_date.isoformat())
+            .lte("slot_date", end_date.isoformat())
+            .execute()
+        )
+        return [str(row["slot_id"]) for row in (resp.data or [])]
+
+    def get_booked_slots(self, start_date: date, end_date: date) -> list[dict]:
+        """Return list of booked slots with date and time (for frontend matching)."""
+        resp = (
+            self.client.table("reservations")
+            .select("slot_date, time_slots(start_time)")
+            .eq("status", "active")
+            .gte("slot_date", start_date.isoformat())
+            .lte("slot_date", end_date.isoformat())
+            .execute()
+        )
+        booked = []
+        for row in (resp.data or []):
+            slot = row.get("time_slots", {})
+            if isinstance(slot, dict):
+                booked.append({
+                    "slot_date": row["slot_date"],
+                    "start_time": slot.get("start_time")
+                })
+            elif isinstance(slot, list) and slot:
+                booked.append({
+                    "slot_date": row["slot_date"],
+                    "start_time": slot[0].get("start_time")
+                })
+        return booked
+
+    def get_reservations_with_student_info(self, start_date: date, end_date: date) -> list[dict]:
+        """Return all active reservations with basic student info (for calendar view)."""
+        resp = (
+            self.client.table("reservations")
+            .select(
+                "id, slot_date, topic, exam_type, "
+                "time_slots(start_time, end_time), "
+                "profiles(full_name, wechat)"
+            )
+            .eq("status", "active")
+            .gte("slot_date", start_date.isoformat())
+            .lte("slot_date", end_date.isoformat())
+            .order("slot_date")
+            .execute()
+        )
+        
+        result = []
+        for row in (resp.data or []):
+            slot = row.get("time_slots", {})
+            profile = row.get("profiles", {})
+            if isinstance(slot, dict):
+                start_time = slot.get("start_time")
+            elif isinstance(slot, list) and slot:
+                start_time = slot[0].get("start_time")
+            else:
+                start_time = None
+            
+            if start_time:
+                result.append({
+                    "id": row["id"],
+                    "slot_date": row["slot_date"],
+                    "start_time": start_time,
+                    "end_time": slot.get("end_time") if isinstance(slot, dict) else (slot[0].get("end_time") if isinstance(slot, list) and slot else None),
+                    "topic": row.get("topic"),
+                    "exam_type": row.get("exam_type"),
+                    "student_name": profile.get("full_name") if isinstance(profile, dict) else None,
+                    "student_wechat": profile.get("wechat") if isinstance(profile, dict) else None,
+                })
+        
+        # Sort by slot_date and start_time in Python
+        result.sort(key=lambda x: (x["slot_date"], x["start_time"]))
+        return result
+
 
 def slot_from_row(row: dict) -> Slot:
     return Slot(
