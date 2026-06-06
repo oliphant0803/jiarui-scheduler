@@ -726,13 +726,20 @@ body {
 }
 
 .admin-tool-card {
-  display: grid;
-  align-content: start;
-  gap: 0.85rem;
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.25rem;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #ffffff;
+  box-shadow: 0 1px 2px rgba(20, 33, 61, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-tool-card:hover {
+  border-color: rgba(0, 85, 164, 0.3);
+  box-shadow: 0 2px 4px rgba(20, 33, 61, 0.05), 0 10px 24px rgba(20, 33, 61, 0.05);
 }
 
 .admin-tool-card h2 {
@@ -752,9 +759,26 @@ body {
   color: var(--ink);
 }
 
+/* Pin each card's button to the bottom so the two cards' buttons align on the
+   same line regardless of how much description text sits above them. */
+.admin-tool-card .btn {
+  margin-top: auto;
+}
+
+/* In the admin tools, the primary action keeps a blue identity on hover
+   instead of the site-wide red accent (red is reserved for the danger zone). */
+.admin-tool-card .btn-primary:hover:not(:disabled),
+.admin-confirm-actions .btn-primary:hover:not(:disabled) {
+  background: var(--bleu-deep);
+}
+
 .danger-zone {
   border-color: rgba(239, 65, 53, 0.28);
   background: rgba(239, 65, 53, 0.035);
+}
+
+.danger-zone:hover {
+  border-color: rgba(239, 65, 53, 0.45);
 }
 
 .admin-result {
@@ -824,6 +848,112 @@ body {
   margin: 0 0 0.85rem;
   font-size: 0.84rem;
   color: var(--muted);
+}
+
+/* ---- Admin reservations calendar ---- */
+.admin-resv-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.admin-resv-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.admin-resv-week {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.3;
+  min-width: 11rem;
+}
+
+.admin-resv-week strong {
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+
+.admin-resv-week span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Reserved cells stand out from open ones in the admin grid. */
+.calendar-slot.admin-slot.is-reserved {
+  background: rgba(0, 85, 164, 0.07);
+  box-shadow: inset 3px 0 0 var(--bleu);
+}
+
+.calendar-slot.admin-slot.is-reserved:hover {
+  background: rgba(0, 85, 164, 0.12);
+}
+
+.admin-slot-name {
+  font-size: 0.92rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.admin-slot-open {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.calendar-slot.admin-slot:hover .admin-slot-open {
+  color: var(--bleu);
+}
+
+.admin-resv-modal {
+  width: min(30rem, 100%);
+}
+
+.admin-resv-identity {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fbfdff;
+}
+
+.admin-resv-identity dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0.4rem 0 0;
+}
+
+.admin-resv-identity dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.admin-resv-identity dd {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.admin-resv-fields {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.admin-resv-actions {
+  align-items: center;
 }
 
 .cleanup-summary {

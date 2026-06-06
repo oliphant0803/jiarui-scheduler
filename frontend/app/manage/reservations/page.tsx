@@ -2,10 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { AdminAccountMenu } from "../admin-account-menu";
-import { AdminSlotTools } from "./admin-slot-tools";
+import { AdminAccountMenu } from "../../admin-account-menu";
+import { AdminReservationCalendar } from "../admin-reservation-calendar";
 
-export default async function ManagePage() {
+export default async function ManageReservationsPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -17,7 +17,7 @@ export default async function ManagePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, phone, wechat, role")
+    .select("role")
     .eq("id", user.id)
     .single();
 
@@ -31,20 +31,20 @@ export default async function ManagePage() {
         <div className="scheduler-topbar">
           <div>
             <p className="eyebrow">Admin tools</p>
-            <h1>Manage time slots</h1>
+            <h1>Reservations calendar</h1>
             <p className="scheduler-sub">
-              Generate slots from the CSV schedule and clean up fully past months.
+              See who reserved each slot, and add, edit, or remove entries.
             </p>
           </div>
           <div className="topbar-actions">
-            <Link href="/manage/reservations" className="secondary-link">
-              Reservations calendar →
+            <Link href="/manage" className="secondary-link">
+              ← Slot tools
             </Link>
             <AdminAccountMenu />
           </div>
         </div>
 
-        <AdminSlotTools />
+        <AdminReservationCalendar />
       </section>
     </main>
   );
