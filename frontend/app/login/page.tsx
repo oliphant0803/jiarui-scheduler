@@ -6,11 +6,13 @@ import { useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import { REMEMBER_COOKIE, REMEMBER_MAX_AGE } from "@/lib/supabase/constants";
+import { EyeIcon, EyeOffIcon } from "../eye-icons";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [needsVerify, setNeedsVerify] = useState(false);
@@ -75,15 +77,26 @@ export default function LoginPage() {
 
         <div className="field">
           <label className="label">Password</label>
-          <input
-            className="input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
-            autoComplete="current-password"
-            required
-          />
+          <div className="input-reveal">
+            <input
+              className="input"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              className="reveal-btn"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          </div>
         </div>
 
         <div className="row-between">

@@ -36,7 +36,21 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Triggers a token refresh if needed and rewrites the cookies above.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Already signed in? Don't show the auth forms again — otherwise a remembered
+  // session looks "forgotten" because the user lands back on a blank login form.
+  const path = request.nextUrl.pathname;
+  if (user && (path === "/login" || path === "/register")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    const redirect = NextResponse.redirect(url);
+    // Carry over any auth cookies refreshed by getUser() above.
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    return redirect;
+  }
 
   return response;
 }
