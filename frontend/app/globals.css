@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+/*
+ * Minimal, clean design with a discreet French accent: bleu de France for
+ * primary actions/focus, a warm "blanc cassé" canvas, and the flag's rouge for
+ * hovers, links, and errors. Not a dark "terminal" look.
+ */
+:root {
+  --bleu: #0055a4; /* drapeau français — blue */
+  --bleu-deep: #003d78;
+  --rouge: #ef4135; /* drapeau français — red */
+  --rouge-deep: #c5281c;
+
+  --canvas: #fafaf7; /* blanc cassé */
+  --surface: #ffffff;
+  --ink: #14213d;
+  --muted: #6b7280;
+  --border: #e7e4dd;
+
+  --background: var(--canvas);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-bleu: var(--bleu);
+  --color-rouge: var(--rouge);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* A thin tricolore rule used as a top accent. */
+.tricolore {
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    var(--bleu) 0 33.33%,
+    #ffffff 33.33% 66.66%,
+    var(--rouge) 66.66% 100%
+  );
+}
+
+/* ---- Auth layout ---- */
+.auth-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 26rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 1px 2px rgba(20, 33, 61, 0.04), 0 12px 32px rgba(20, 33, 61, 0.06);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.25rem;
+}
+
+.card-sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ---- Fields ---- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-size: 0.82rem;
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: #b4b1a9;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--bleu);
+  box-shadow: 0 0 0 3px rgba(0, 85, 164, 0.15);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--rouge);
+  box-shadow: 0 0 0 3px rgba(239, 65, 53, 0.14);
+}
+
+.field-error {
+  color: var(--rouge-deep);
+  font-size: 0.78rem;
+}
+
+.input-reveal {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-reveal .input {
+  padding-right: 2.75rem;
+}
+
+.reveal-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border: none;
+  background: none;
+  color: #8a877f;
+  cursor: pointer;
+}
+
+.reveal-btn:hover {
+  color: var(--bleu);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, transform 0.02s ease;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--bleu);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--rouge); /* French accent on hover */
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* ---- Misc ---- */
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.checkbox-row input {
+  accent-color: var(--bleu);
+  width: 1rem;
+  height: 1rem;
+}
+
+.link {
+  color: var(--bleu);
+  font-size: 0.85rem;
+  text-decoration: none;
+  font-weight: 550;
+}
+
+.link:hover {
+  color: var(--rouge);
+  text-decoration: underline;
+}
+
+.alert {
+  border-radius: 9px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.alert-error {
+  background: rgba(239, 65, 53, 0.08);
+  border: 1px solid rgba(239, 65, 53, 0.25);
+  color: var(--rouge-deep);
+}
+
+.alert-success {
+  background: rgba(0, 85, 164, 0.07);
+  border: 1px solid rgba(0, 85, 164, 0.22);
+  color: var(--bleu-deep);
+}
+
+.foot-note {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
