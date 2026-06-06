@@ -77,7 +77,10 @@ function friendlyError(message: string): string {
 }
 
 export function AdminReservationCalendar() {
-  const [weekMonday, setWeekMonday] = useState<string>(() => nextTargetWeekMondayKey());
+  // The week students are currently booking, anchored to the calendar "now"
+  // (which honours NEXT_PUBLIC_TEST_NOW from .env). No week navigation — admins
+  // manage the upcoming target week.
+  const [weekMonday] = useState<string>(() => nextTargetWeekMondayKey());
   const [slots, setSlots] = useState<SlotRow[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -183,25 +186,13 @@ export function AdminReservationCalendar() {
   return (
     <div className="admin-resv">
       <div className="admin-resv-bar">
-        <div className="admin-resv-nav">
-          <button type="button" className="secondary-link" onClick={() => setWeekMonday((k) => shiftKey(k, -7))}>
-            ‹ Prev week
-          </button>
-          <div className="admin-resv-week">
-            <strong>{rangeLabel}</strong>
-            <span>{activeCount} reservation{activeCount === 1 ? "" : "s"} this week</span>
-          </div>
-          <button type="button" className="secondary-link" onClick={() => setWeekMonday((k) => shiftKey(k, 7))}>
-            Next week ›
-          </button>
+        <div className="admin-resv-week">
+          <p className="popover-kicker">Upcoming bookable week</p>
+          <strong>{rangeLabel}</strong>
         </div>
-        <button
-          type="button"
-          className="secondary-link"
-          onClick={() => setWeekMonday(nextTargetWeekMondayKey())}
-        >
-          Jump to bookable week
-        </button>
+        <span className="admin-resv-count">
+          {activeCount} reservation{activeCount === 1 ? "" : "s"}
+        </span>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -240,6 +231,7 @@ export function AdminReservationCalendar() {
                         type="button"
                         key={slot.id}
                         className={`calendar-slot admin-slot ${reservation ? "is-reserved" : ""}`}
+                        data-exam={reservation ? reservation.exam_type : slot.exam_type ?? "FLEX"}
                         onClick={() =>
                           setPanel(
                             reservation

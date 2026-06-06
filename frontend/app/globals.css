@@ -850,6 +850,19 @@ body {
   color: var(--muted);
 }
 
+.admin-section-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.admin-section-title-spaced {
+  margin-top: 2.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
 /* ---- Admin reservations calendar ---- */
 .admin-resv-bar {
   display: flex;
@@ -860,38 +873,42 @@ body {
   margin-bottom: 1rem;
 }
 
-.admin-resv-nav {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
 .admin-resv-week {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.3;
-  min-width: 11rem;
+  line-height: 1.35;
 }
 
 .admin-resv-week strong {
-  font-size: 0.98rem;
+  font-size: 1.02rem;
   color: var(--ink);
 }
 
-.admin-resv-week span {
-  font-size: 0.78rem;
-  color: var(--muted);
+.admin-resv-count {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(0, 85, 164, 0.2);
+  border-radius: 999px;
+  background: rgba(0, 85, 164, 0.06);
+  color: var(--bleu-deep);
+  font-size: 0.82rem;
+  font-weight: 650;
 }
 
-/* Reserved cells stand out from open ones in the admin grid. */
-.calendar-slot.admin-slot.is-reserved {
-  background: rgba(0, 85, 164, 0.07);
+/* Reserved cells stand out from open ones, keeping the exam-type colour. */
+.calendar-slot.admin-slot.is-reserved[data-exam="TEF"] {
+  background: rgba(0, 85, 164, 0.13);
   box-shadow: inset 3px 0 0 var(--bleu);
 }
 
-.calendar-slot.admin-slot.is-reserved:hover {
-  background: rgba(0, 85, 164, 0.12);
+.calendar-slot.admin-slot.is-reserved[data-exam="TCF"] {
+  background: rgba(239, 65, 53, 0.13);
+  box-shadow: inset 3px 0 0 var(--rouge);
+}
+
+.calendar-slot.admin-slot.is-reserved[data-exam="TEF"]:hover {
+  background: rgba(0, 85, 164, 0.18);
+}
+
+.calendar-slot.admin-slot.is-reserved[data-exam="TCF"]:hover {
+  background: rgba(239, 65, 53, 0.18);
 }
 
 .admin-slot-name {
@@ -1216,6 +1233,44 @@ body {
   font-size: 0.72rem;
   color: var(--bleu-deep);
   font-weight: 700;
+}
+
+/* Slight exam-type tints so TEF and TCF slots read differently at a glance:
+   TEF -> French blue, TCF -> French red, Friday FLEX -> neutral violet. */
+.calendar-slot[data-exam="TEF"] {
+  background: rgba(0, 85, 164, 0.05);
+}
+
+.calendar-slot[data-exam="TCF"] {
+  background: rgba(239, 65, 53, 0.05);
+}
+
+.calendar-slot[data-exam="FLEX"] {
+  background: rgba(110, 86, 168, 0.06);
+}
+
+.calendar-slot[data-exam="TEF"] .slot-type {
+  color: var(--bleu-deep);
+}
+
+.calendar-slot[data-exam="TCF"] .slot-type {
+  color: var(--rouge-deep);
+}
+
+.calendar-slot[data-exam="FLEX"] .slot-type {
+  color: #5b4a8a;
+}
+
+.calendar-slot[data-exam="TEF"]:hover:not(:disabled) {
+  background: rgba(0, 85, 164, 0.1);
+}
+
+.calendar-slot[data-exam="TCF"]:hover:not(:disabled) {
+  background: rgba(239, 65, 53, 0.1);
+}
+
+.calendar-slot[data-exam="FLEX"]:hover:not(:disabled) {
+  background: rgba(110, 86, 168, 0.12);
 }
 
 .booking-popover {

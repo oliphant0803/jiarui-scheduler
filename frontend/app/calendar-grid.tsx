@@ -190,6 +190,7 @@ export function CalendarGrid({ slots, editable, studentIdentity }: Props) {
                     type="button"
                     key={slot.id}
                     className={`calendar-slot ${isSelected ? "is-selected" : ""}`}
+                    data-exam={slot.examType ?? "FLEX"}
                     onClick={() => canBook && selectSlot(slot.id)}
                     disabled={!canBook}
                   >
