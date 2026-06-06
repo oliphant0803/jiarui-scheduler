@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
+import { BrandHeader } from "./brand-header";
 import { SignOutButton } from "./sign-out-button";
 
 export default async function Home() {
@@ -22,7 +23,7 @@ export default async function Home() {
   return (
     <main className="auth-wrap">
       <div className="card">
-        <div className="tricolore" style={{ marginBottom: "1.5rem", borderRadius: 2 }} />
+        <BrandHeader />
         <h1 className="card-title">
           <span className="brand">Online Study Room </span>Reservation
         </h1>

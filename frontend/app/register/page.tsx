@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import { BrandHeader } from "../brand-header";
 import { EyeIcon, EyeOffIcon } from "../eye-icons";
 
 type FieldErrors = Partial<
@@ -120,7 +121,7 @@ export default function RegisterPage() {
     return (
       <main className="auth-wrap">
         <div className="card">
-          <div className="tricolore" style={{ marginBottom: "1.25rem", borderRadius: 2 }} />
+          <BrandHeader />
           <h1 className="card-title">Vérifiez votre email</h1>
           <p className="card-sub">
             We sent a verification link to <strong>{form.email}</strong>. Click it
@@ -137,7 +138,7 @@ export default function RegisterPage() {
   return (
     <main className="auth-wrap">
       <form className="card" onSubmit={onSubmit} noValidate>
-        <div className="tricolore" style={{ marginBottom: "1.25rem", borderRadius: 2 }} />
+        <BrandHeader />
         <h1 className="card-title">Create your account</h1>
         <p className="card-sub">Register to reserve exam-prep office hours.</p>
 

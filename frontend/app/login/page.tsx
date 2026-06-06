@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import { REMEMBER_COOKIE, REMEMBER_MAX_AGE } from "@/lib/supabase/constants";
+import { BrandHeader } from "../brand-header";
 import { EyeIcon, EyeOffIcon } from "../eye-icons";
 
 export default function LoginPage() {
@@ -50,7 +51,7 @@ export default function LoginPage() {
   return (
     <main className="auth-wrap">
       <form className="card" onSubmit={onSubmit} noValidate>
-        <div className="tricolore" style={{ marginBottom: "1.25rem", borderRadius: 2 }} />
+        <BrandHeader />
         <h1 className="card-title">Welcome back</h1>
         <p className="card-sub">Log in to manage your office-hour reservations.</p>
 

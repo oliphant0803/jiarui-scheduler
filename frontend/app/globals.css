@@ -48,6 +48,25 @@ body {
   );
 }
 
+/* ---- Brand lockup (logo + rule) atop each card ---- */
+.brand-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.brand-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 1.1rem;
+}
+
+.brand-header .tricolore {
+  border-radius: 2px;
+}
+
 /* ---- Auth layout ---- */
 .auth-wrap {
   min-height: 100dvh;
