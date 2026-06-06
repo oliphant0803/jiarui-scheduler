@@ -277,9 +277,10 @@ body {
 
 .owl-note-avatar {
   flex: none;
-  font-size: 1.7rem;
-  line-height: 1.3;
-  filter: drop-shadow(0 1px 1px rgba(20, 33, 61, 0.15));
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  margin-top: 2px;
 }
 
 .owl-note-bubble {

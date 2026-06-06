@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -143,9 +144,14 @@ export default function RegisterPage() {
         <p className="card-sub">Register to reserve exam-prep office hours.</p>
 
         <div className="owl-note" role="note">
-          <span className="owl-note-avatar" aria-hidden="true">
-            🦉
-          </span>
+          <Image
+            src="/logo.png"
+            alt=""
+            width={44}
+            height={44}
+            className="owl-note-avatar"
+            aria-hidden="true"
+          />
           <p className="owl-note-bubble">
             <strong>Hoot! A wise word before you fly off —</strong> your{" "}
             <strong>full name</strong>, <strong>email</strong>, and{" "}
