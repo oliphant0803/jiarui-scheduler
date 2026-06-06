@@ -25,7 +25,7 @@ export default async function Home() {
       <div className="card">
         <BrandHeader />
         <h1 className="card-title">
-          <span className="brand">Online Study Room </span>Reservation
+          <span className="brand">Online Study Platform </span>
         </h1>
 
         {user ? (
