@@ -42,6 +42,7 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
   const [topic, setTopic] = useState<Topic>("Speaking");
   const [examType, setExamType] = useState<ExamType>("TEF");
   const [identityConfirmed, setIdentityConfirmed] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
   function selectSlot(slotId: string) {
     setSelectedSlotId(slotId);
     setIdentityConfirmed(false);
+    setConfirming(false);
     setSubmitError(null);
     setSubmitMessage(null);
   }
@@ -325,14 +327,52 @@ export function CalendarGrid({ slots, editable, myReservations = [], studentIden
           </div>
           {submitError && <div className="alert alert-error compact-alert">{submitError}</div>}
           {submitMessage && <div className="alert alert-success compact-alert">{submitMessage}</div>}
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={reserveSelectedSlot}
-            disabled={submitting || !identityConfirmed || !hasReservationIdentity}
-          >
-            {submitting ? "Reserving..." : "Reserve this slot"}
-          </button>
+
+          {confirming ? (
+            <div className="reserve-confirm" role="alertdialog" aria-label="Confirm reservation">
+              <p className="reserve-confirm-text">
+                <span className="reserve-confirm-mark" aria-hidden="true">
+                  !
+                </span>
+                <span>
+                  This booking is <strong>final</strong> — you won&apos;t be able to
+                  change or move it yourself. Please double-check the{" "}
+                  <strong>day, time, topic, and course</strong> below.
+                </span>
+              </p>
+              <p className="reserve-confirm-summary">
+                {dayLabel(selectedSlot.date)} · {selectedSlot.start} —{" "}
+                {selectedSlot.flexible ? examType : selectedSlot.examType} · {topic}
+              </p>
+              <div className="reserve-confirm-actions">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={reserveSelectedSlot}
+                  disabled={submitting}
+                >
+                  {submitting ? "Reserving..." : "Yes, reserve it"}
+                </button>
+                <button
+                  className="reserve-confirm-back"
+                  type="button"
+                  onClick={() => setConfirming(false)}
+                  disabled={submitting}
+                >
+                  Go back
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={() => setConfirming(true)}
+              disabled={!identityConfirmed || !hasReservationIdentity}
+            >
+              Reserve this slot
+            </button>
+          )}
         </div>
       )}
     </div>

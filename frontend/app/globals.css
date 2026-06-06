@@ -1288,31 +1288,42 @@ body {
   background: rgba(110, 86, 168, 0.12);
 }
 
-/* The student's own booking — unmistakable green "yours" state. */
+/* The student's own booking — a bold, filled green so it is unmistakable. */
 .calendar-slot.is-mine,
 .calendar-slot.is-mine:disabled {
-  background: rgba(31, 157, 85, 0.16);
-  box-shadow: inset 5px 0 0 #1f9d55;
+  background: #1f9d55;
+  box-shadow: inset 6px 0 0 #126e3a;
   cursor: default;
 }
 
-.calendar-slot.is-mine .slot-type {
-  color: #14211d;
-  font-weight: 750;
+.calendar-slot.is-mine .slot-time {
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.calendar-slot.is-mine .slot-status {
-  color: #157347;
+.calendar-slot.is-mine .slot-type {
+  color: #ffffff;
   font-weight: 800;
 }
 
-/* Slots the student can't book right now (phase-1 week lock or same-day lock). */
-.calendar-slot.is-locked:disabled {
-  opacity: 0.55;
+.calendar-slot.is-mine .slot-status {
+  color: #ffffff;
+  font-weight: 800;
 }
 
+/* Slots the student can't book right now (phase-1 week lock or same-day lock):
+   clearly greyed out and inert. */
+.calendar-slot.is-locked,
+.calendar-slot.is-locked:disabled {
+  background: #f1f2f4;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.calendar-slot.is-locked .slot-time,
+.calendar-slot.is-locked .slot-type,
 .calendar-slot.is-locked .slot-status {
-  color: var(--muted);
+  color: #b3b7be;
+  font-weight: 600;
 }
 
 .booking-popover {
@@ -1440,6 +1451,76 @@ body {
 .identity-preview strong {
   color: var(--ink);
   font-size: 0.92rem;
+}
+
+/* Final-confirmation friction before a reservation is committed. */
+.reserve-confirm {
+  border: 1px solid rgba(239, 65, 53, 0.3);
+  border-radius: 11px;
+  background: rgba(239, 65, 53, 0.05);
+  padding: 0.85rem 0.9rem;
+}
+
+.reserve-confirm-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.reserve-confirm-mark {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--rouge);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.reserve-confirm-summary {
+  margin: 0.6rem 0 0.85rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+}
+
+.reserve-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reserve-confirm-actions .btn {
+  width: auto;
+  flex: 1;
+}
+
+.reserve-confirm-back {
+  border: 0;
+  background: none;
+  padding: 0.4rem 0.6rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.reserve-confirm-back:hover:not(:disabled) {
+  color: var(--ink);
+  text-decoration: underline;
 }
 
 @media (max-width: 720px) {
