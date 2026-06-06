@@ -892,23 +892,35 @@ body {
   font-weight: 650;
 }
 
-/* Reserved cells stand out from open ones, keeping the exam-type colour. */
+/* Reserved cells are clearly filled (not just a faint tint) and keep the
+   exam-type colour with a bold left bar, so booked slots pop. */
 .calendar-slot.admin-slot.is-reserved[data-exam="TEF"] {
-  background: rgba(0, 85, 164, 0.13);
-  box-shadow: inset 3px 0 0 var(--bleu);
+  background: rgba(0, 85, 164, 0.22);
+  box-shadow: inset 5px 0 0 var(--bleu);
 }
 
 .calendar-slot.admin-slot.is-reserved[data-exam="TCF"] {
-  background: rgba(239, 65, 53, 0.13);
-  box-shadow: inset 3px 0 0 var(--rouge);
+  background: rgba(239, 65, 53, 0.2);
+  box-shadow: inset 5px 0 0 var(--rouge);
 }
 
 .calendar-slot.admin-slot.is-reserved[data-exam="TEF"]:hover {
-  background: rgba(0, 85, 164, 0.18);
+  background: rgba(0, 85, 164, 0.3);
 }
 
 .calendar-slot.admin-slot.is-reserved[data-exam="TCF"]:hover {
-  background: rgba(239, 65, 53, 0.18);
+  background: rgba(239, 65, 53, 0.28);
+}
+
+/* In a reserved cell the student name leads — make it dark and bold so it
+   reads over the stronger fill. */
+.calendar-slot.admin-slot.is-reserved .admin-slot-name {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.calendar-slot.admin-slot.is-reserved .slot-time {
+  color: var(--ink);
 }
 
 .admin-slot-name {
@@ -1249,15 +1261,18 @@ body {
   background: rgba(110, 86, 168, 0.06);
 }
 
-.calendar-slot[data-exam="TEF"] .slot-type {
+.calendar-slot[data-exam="TEF"] .slot-type,
+.calendar-slot[data-exam="TEF"] .slot-status {
   color: var(--bleu-deep);
 }
 
-.calendar-slot[data-exam="TCF"] .slot-type {
+.calendar-slot[data-exam="TCF"] .slot-type,
+.calendar-slot[data-exam="TCF"] .slot-status {
   color: var(--rouge-deep);
 }
 
-.calendar-slot[data-exam="FLEX"] .slot-type {
+.calendar-slot[data-exam="FLEX"] .slot-type,
+.calendar-slot[data-exam="FLEX"] .slot-status {
   color: #5b4a8a;
 }
 
