@@ -267,6 +267,51 @@ body {
   color: var(--muted);
 }
 
+/* ---- Owl mascot note (signup disclaimer) ---- */
+.owl-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.owl-note-avatar {
+  flex: none;
+  font-size: 1.7rem;
+  line-height: 1.3;
+  filter: drop-shadow(0 1px 1px rgba(20, 33, 61, 0.15));
+}
+
+.owl-note-bubble {
+  position: relative;
+  background: rgba(0, 85, 164, 0.06);
+  border: 1px solid rgba(0, 85, 164, 0.2);
+  border-radius: 11px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* little tail pointing back at the owl */
+.owl-note-bubble::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 13px;
+  width: 11px;
+  height: 11px;
+  background: inherit;
+  border-left: 1px solid rgba(0, 85, 164, 0.2);
+  border-bottom: 1px solid rgba(0, 85, 164, 0.2);
+  transform: rotate(45deg);
+}
+
+.owl-note-bubble strong {
+  font-weight: 600;
+  color: var(--bleu-deep);
+}
+
 .brand {
   font-weight: 700;
   letter-spacing: -0.01em;

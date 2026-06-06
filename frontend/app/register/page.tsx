@@ -142,6 +142,20 @@ export default function RegisterPage() {
         <h1 className="card-title">Create your account</h1>
         <p className="card-sub">Register to reserve exam-prep office hours.</p>
 
+        <div className="owl-note" role="note">
+          <span className="owl-note-avatar" aria-hidden="true">
+            🦉
+          </span>
+          <p className="owl-note-bubble">
+            <strong>Hoot! A wise word before you fly off —</strong> your{" "}
+            <strong>full name</strong>, <strong>email</strong>, and{" "}
+            <strong>WeChat ID</strong> are the three keys I use to match you to
+            your reservations. Enter them carefully and exactly as you&apos;ll
+            use them; a typo here can leave a booking with no owl to deliver it
+            to. 🌿
+          </p>
+        </div>
+
         {generalError && <div className="alert alert-error">{generalError}</div>}
 
         <Field
