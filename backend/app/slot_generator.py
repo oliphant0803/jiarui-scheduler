@@ -155,6 +155,29 @@ class RawSupabaseTable:
             raise RuntimeError(f"Supabase cleanup preview failed: {response.status_code} {response.text}")
         return response.json()
 
+    def list_existing_week_starts(self, start: date, end: date) -> set[str]:
+        """Return the set of week_start values already present in [start, end)."""
+        import httpx
+
+        response = httpx.get(
+            f"{self.supabase_url}/rest/v1/{self.table_name}",
+            params=[
+                ("week_start", f"gte.{start.isoformat()}"),
+                ("week_start", f"lt.{end.isoformat()}"),
+                ("select", "week_start"),
+            ],
+            headers={
+                "apikey": self.api_key,
+                "Authorization": f"Bearer {self.api_key}",
+            },
+            timeout=30.0,
+        )
+        if response.is_error:
+            raise RuntimeError(
+                f"Supabase week_start lookup failed: {response.status_code} {response.text}"
+            )
+        return {str(row["week_start"]) for row in response.json()}
+
 
 def normalize_week_start(week_start: date | datetime | str) -> date:
     """Return the Monday date for a target week."""
@@ -349,12 +372,38 @@ def generate_upcoming_months(
     return generated
 
 
+def existing_week_starts(client, start: date, end: date) -> set[str]:
+    """Return week_start values already in the DB within [start, end).
+
+    Works with either the raw PostgREST client or supabase-py. Returns an empty
+    set if the lookup fails, so a preview never blocks on a transient DB error.
+    """
+    table = client.table("time_slots")
+    try:
+        if hasattr(table, "list_existing_week_starts"):
+            return table.list_existing_week_starts(start, end)
+        resp = (
+            table.select("week_start")
+            .gte("week_start", start.isoformat())
+            .lt("week_start", end.isoformat())
+            .execute()
+        )
+        return {str(row["week_start"]) for row in (resp.data or [])}
+    except Exception:
+        return set()
+
+
 def preview_upcoming_months(
     months: int = 2,
     now: datetime | None = None,
     csv_path: Path | str | None = None,
-) -> list[dict[str, str | int]]:
-    """Return weeks and slot counts that would be generated from the CSV."""
+    client=None,
+) -> list[dict[str, str | int | bool]]:
+    """Return weeks and slot counts that would be generated from the CSV.
+
+    Each week is flagged with ``exists`` — True when slots for that week are
+    already present in the database, so the UI can disable re-generating them.
+    """
     if months < 1:
         raise ValueError("months must be at least 1")
 
@@ -370,7 +419,12 @@ def preview_upcoming_months(
     rules = load_slot_rules(csv_path)
 
     target = normalize_week_start(next_target_week_start(now))
-    preview: list[dict[str, str | int]] = []
+
+    if client is None:
+        client = get_slot_generation_client()
+    existing = existing_week_starts(client, target, end_exclusive)
+
+    preview: list[dict[str, str | int | bool]] = []
     while target < end_exclusive:
         slots = build_week_slots(target, rules=rules)
         preview.append(
@@ -378,6 +432,7 @@ def preview_upcoming_months(
                 "week_start": target.isoformat(),
                 "week_end": (target + timedelta(days=4)).isoformat(),
                 "slots_count": len(slots),
+                "exists": target.isoformat() in existing,
             }
         )
         target += timedelta(days=7)

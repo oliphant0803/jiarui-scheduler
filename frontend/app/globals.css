@@ -796,6 +796,36 @@ body {
   color: var(--ink);
 }
 
+/* A week whose slots already exist in the DB — locked, can't be regenerated. */
+.admin-preview-list li.preview-week-exists {
+  background: #f4f5f7;
+  border-style: dashed;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.admin-preview-list li.preview-week-exists strong {
+  color: var(--muted);
+}
+
+.exists-badge {
+  flex: none;
+  align-self: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(20, 33, 61, 0.08);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-preview-summary {
+  margin: 0 0 0.85rem;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
 .cleanup-summary {
   margin-bottom: 0.75rem;
   padding: 0.7rem 0.85rem;

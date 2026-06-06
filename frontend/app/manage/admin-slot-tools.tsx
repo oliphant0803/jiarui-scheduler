@@ -10,6 +10,7 @@ type GenerateWeek = {
   week_start: string;
   week_end: string;
   slots_count: number;
+  exists: boolean;
 };
 
 type CleanupMonth = {
@@ -206,9 +207,19 @@ export function AdminSlotTools() {
                 type="button"
                 className={preview.type === "generate" ? "btn btn-primary" : "btn btn-danger"}
                 onClick={() => confirmAction(preview.type)}
-                disabled={loadingAction !== null}
+                disabled={
+                  loadingAction !== null ||
+                  (preview.type === "generate" &&
+                    !preview.weeks.some((week) => !week.exists))
+                }
               >
-                {loadingAction ? "Working..." : preview.type === "generate" ? "Confirm generation" : "Confirm cleanup"}
+                {loadingAction
+                  ? "Working..."
+                  : preview.type === "generate"
+                    ? preview.weeks.some((week) => !week.exists)
+                      ? "Confirm generation"
+                      : "All weeks already exist"
+                    : "Confirm cleanup"}
               </button>
               <button
                 type="button"
@@ -230,17 +241,39 @@ function GeneratePreview({ weeks }: { weeks: GenerateWeek[] }) {
     return <p className="admin-empty-state">No target weeks found for the next two months.</p>;
   }
 
+  const newCount = weeks.filter((week) => !week.exists).length;
+
   return (
-    <ul className="admin-preview-list">
-      {weeks.map((week) => (
-        <li key={week.week_start}>
-          <span>
-            Week of <strong>{week.week_start}</strong>
-          </span>
-          <span>{week.slots_count} slots</span>
-        </li>
-      ))}
-    </ul>
+    <>
+      <p className="admin-preview-summary">
+        {newCount > 0
+          ? `${newCount} new week${newCount === 1 ? "" : "s"} to generate. Weeks already in the database are locked.`
+          : "Every week in this range already exists in the database — nothing to generate."}
+      </p>
+      <ul className="admin-preview-list">
+        {weeks.map((week) => (
+          <li
+            key={week.week_start}
+            className={week.exists ? "preview-week-exists" : undefined}
+            data-exists={week.exists || undefined}
+            title={
+              week.exists
+                ? "These slots already exist in the database and cannot be regenerated."
+                : undefined
+            }
+          >
+            <span>
+              Week of <strong>{week.week_start}</strong>
+            </span>
+            {week.exists ? (
+              <span className="exists-badge">Already exists</span>
+            ) : (
+              <span>{week.slots_count} slots</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
