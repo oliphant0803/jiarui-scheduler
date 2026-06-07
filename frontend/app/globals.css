@@ -269,6 +269,87 @@ body {
   background: var(--rouge-deep);
 }
 
+/* ---- Week navigation ---- */
+.week-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.week-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.week-nav-btn:hover {
+  background: rgba(0, 85, 164, 0.06);
+  border-color: var(--bleu);
+}
+
+.week-nav-btn:disabled,
+.week-nav-btn.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #f7f9fc;
+  color: var(--muted);
+}
+
+.week-nav-btn:disabled:hover,
+.week-nav-btn.is-disabled:hover {
+  border-color: var(--border);
+  background: #f7f9fc;
+}
+
+.week-nav-range {
+  font-weight: 650;
+  color: var(--ink);
+  font-size: 0.92rem;
+  padding: 0 0.2rem;
+}
+
+.week-nav-reset {
+  background: none;
+  border: none;
+  padding: 0.2rem 0.3rem;
+  color: var(--bleu);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.week-nav-reset:hover {
+  color: var(--rouge);
+}
+
+.scheduler-panel > .week-nav {
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: rgba(0, 85, 164, 0.025);
+}
+
+.scheduler-panel > .week-nav + .calendar-shell {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 /* ---- Misc ---- */
 .row-between {
   display: flex;
@@ -1354,6 +1435,38 @@ body {
 .calendar-slot.is-booked .slot-status {
   color: #b3b7be;
   font-weight: 600;
+}
+
+.calendar-slot.is-past-day,
+.calendar-slot.is-past-day:disabled,
+.calendar-slot.is-past-day.is-mine,
+.calendar-slot.is-past-day.is-booked,
+.calendar-slot.is-past-day.is-mine.is-booked {
+  background: #eef0f3;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.calendar-slot.is-past-day .slot-time,
+.calendar-slot.is-past-day .slot-type,
+.calendar-slot.is-past-day .slot-status,
+.calendar-slot.is-past-day.is-mine .slot-time,
+.calendar-slot.is-past-day.is-mine .slot-type,
+.calendar-slot.is-past-day.is-mine .slot-status {
+  color: #a5abb4;
+  font-weight: 600;
+}
+
+.calendar-slot.is-completed-booking,
+.calendar-slot.is-completed-booking:disabled,
+.calendar-slot.is-completed-booking.is-mine.is-booked {
+  background: #e7edf5;
+  box-shadow: inset 6px 0 0 rgba(0, 85, 164, 0.45);
+}
+
+.calendar-slot.is-completed-booking .slot-status {
+  color: var(--bleu-deep);
+  font-weight: 800;
 }
 
 /* Admin/public view booked slots: more prominent with student name displayed. */

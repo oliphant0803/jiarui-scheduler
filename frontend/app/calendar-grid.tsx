@@ -8,6 +8,7 @@ import {
   CalendarSlot,
   ExamType,
   Topic,
+  currentTorontoDateKey,
   dayLabel,
   examTypes,
   getBookingPhase,
@@ -43,13 +44,23 @@ type Props = {
   bookedSlotKeys?: string[];
   reservationsInfo?: ReservationInfo[];
   isPublicView?: boolean;
+  disablePastDays?: boolean;
   studentIdentity?: {
     fullName: string | null;
     wechat: string | null;
   };
 };
 
-export function CalendarGrid({ slots, editable, myReservations = [], bookedSlotKeys = [], reservationsInfo = [], isPublicView = false, studentIdentity }: Props) {
+export function CalendarGrid({
+  slots,
+  editable,
+  myReservations = [],
+  bookedSlotKeys = [],
+  reservationsInfo = [],
+  isPublicView = false,
+  disablePastDays = false,
+  studentIdentity,
+}: Props) {
   const router = useRouter();
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
@@ -62,6 +73,7 @@ export function CalendarGrid({ slots, editable, myReservations = [], bookedSlotK
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const phase = getBookingPhase(getCalendarNow());
+  const todayKey = currentTorontoDateKey(getCalendarNow());
   const canBook = editable && (phase === "phase1" || phase === "phase2");
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId) ?? null;
   const hasReservationIdentity = Boolean(studentIdentity?.fullName && studentIdentity?.wechat);
@@ -245,9 +257,10 @@ export function CalendarGrid({ slots, editable, myReservations = [], bookedSlotK
                 const mine = mineByKey.get(`${slot.dayKey} ${slot.start}`);
                 const isMine = Boolean(mine);
                 const isBooked = bookedSlotKeys.includes(`${slot.dayKey} ${slot.start}`);
+                const isPastDay = disablePastDays && slot.dayKey < todayKey;
                 const dayLocked = !isMine && reservedDays.has(slot.dayKey);
                 const lockedOut = !isMine && (weekLocked || dayLocked || isBooked);
-                const selectable = canBook && !isMine && !lockedOut;
+                const selectable = canBook && !isPastDay && !isMine && !lockedOut;
                 
                 // Get reservation info if slot is booked
                 const slotKey = `${slot.dayKey} ${slot.start}`;
@@ -264,11 +277,15 @@ export function CalendarGrid({ slots, editable, myReservations = [], bookedSlotK
                       : slot.examType;
 
                 const statusText = isMine
-                  ? "✓ Your booking"
+                  ? isPastDay
+                    ? "✓ Completed"
+                    : "✓ Your booking"
                   : isBooked && isPublicView && bookedReservation
                     ? `${bookedReservation.exam_type} · ${bookedReservation.topic}`
                     : isBooked
                       ? "Booked"
+                      : isPastDay
+                        ? "Past"
                       : !editable
                         ? "Open"
                         : lockedOut
@@ -278,7 +295,7 @@ export function CalendarGrid({ slots, editable, myReservations = [], bookedSlotK
                             : "View only";
 
                 const publicViewBooked = isBooked && isPublicView;
-                const classNames = `calendar-slot ${isSelected ? "is-selected" : ""} ${isMine ? "is-mine" : ""} ${publicViewBooked ? "admin-slot is-reserved" : isBooked ? "is-booked" : ""} ${lockedOut && !isBooked ? "is-locked" : ""}`;
+                const classNames = `calendar-slot ${isSelected ? "is-selected" : ""} ${isPastDay ? "is-past-day" : ""} ${isPastDay && isMine ? "is-completed-booking" : ""} ${isMine ? "is-mine" : ""} ${publicViewBooked ? "admin-slot is-reserved" : isBooked ? "is-booked" : ""} ${lockedOut && !isBooked ? "is-locked" : ""}`;
 
                 return (
                   <button
@@ -302,7 +319,7 @@ export function CalendarGrid({ slots, editable, myReservations = [], bookedSlotK
                         }
                       }
                     }}
-                    disabled={!selectable && !((!editable && isBooked) || isMine)}
+                    disabled={isPastDay || (!selectable && !((!editable && isBooked) || isMine))}
                   >
                     <span className="slot-time">
                       {slot.start} - {slot.end}

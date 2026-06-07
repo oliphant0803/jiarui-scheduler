@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     # Default timezone for scheduling (IANA name, e.g. America/Toronto).
     timezone: str = "America/Toronto"
 
+    # Optional calendar clock override for testing (ISO 8601, e.g.
+    # 2026-06-04T13:00:00-04:00). Mirrors the frontend NEXT_PUBLIC_TEST_NOW so
+    # admin slot generation targets the same weeks the calendar displays. Leave
+    # empty (or "null") in production to use the real current time.
+    test_now: str = ""
+
     # Admin bootstrap credentials, read by scripts/seed_admin.py only.
     # NEVER hardcoded or committed (PROJECT_SPEC §2).
     admin_email: str = ""

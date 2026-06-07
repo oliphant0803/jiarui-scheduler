@@ -3,10 +3,12 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
+import os
 import threading
 import unittest
 from zoneinfo import ZoneInfo
 
+from app.config import get_settings
 from app.reservations import ReservationError, Slot, booking_window_for_slot, create_reservation
 
 
@@ -174,6 +176,29 @@ class ReservationRulesTests(unittest.TestCase):
         create_reservation(FakePayload(slot_id="tue", topic="Writing"), user, repo, now=now)
 
         self.assertEqual(len(repo.reservations), 2)
+
+    def test_create_reservation_honours_test_now_when_now_is_omitted(self) -> None:
+        old_test_now = os.environ.get("TEST_NOW")
+        os.environ["TEST_NOW"] = "2026-06-11T13:00:00-04:00"
+        get_settings.cache_clear()
+
+        try:
+            week_start = date(2026, 6, 15)
+            repo = FakeRepo([make_slot("slot", week_start, week_start)])
+
+            row = create_reservation(
+                FakePayload(slot_id="slot", topic="Speaking"),
+                make_user("student"),
+                repo,
+            )
+        finally:
+            if old_test_now is None:
+                os.environ.pop("TEST_NOW", None)
+            else:
+                os.environ["TEST_NOW"] = old_test_now
+            get_settings.cache_clear()
+
+        self.assertEqual(row["slot_id"], "slot")
 
     def test_gap_rejects_all_bookings(self) -> None:
         week_start = date(2026, 6, 8)

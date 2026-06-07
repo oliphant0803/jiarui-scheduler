@@ -179,6 +179,43 @@ class RawSupabaseTable:
         return {str(row["week_start"]) for row in response.json()}
 
 
+def parse_test_now() -> datetime | None:
+    """Return the configured TEST_NOW override as a Toronto-aware datetime.
+
+    Mirrors the frontend ``getCalendarNow`` so slot generation anchors to the
+    same simulated clock. Returns None when unset/"null"/unparseable so callers
+    fall back to the real current time.
+    """
+    from app.config import get_settings
+
+    raw = (get_settings().test_now or "").strip()
+    if not raw or raw.lower() == "null":
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=TORONTO_TZ)
+    return parsed.astimezone(TORONTO_TZ)
+
+
+def resolve_now(now: datetime | None = None) -> datetime:
+    """Normalise ``now`` to a Toronto-aware datetime.
+
+    When no explicit ``now`` is given, honour the TEST_NOW env override before
+    falling back to the real current time, so every generator entrypoint shares
+    one clock.
+    """
+    if now is None:
+        now = parse_test_now()
+    if now is None:
+        return datetime.now(TORONTO_TZ)
+    if now.tzinfo is None:
+        return now.replace(tzinfo=TORONTO_TZ)
+    return now.astimezone(TORONTO_TZ)
+
+
 def normalize_week_start(week_start: date | datetime | str) -> date:
     """Return the Monday date for a target week."""
     if isinstance(week_start, str):
@@ -272,12 +309,7 @@ def build_week_slots(
 
 def next_target_week_start(now: datetime | None = None) -> date:
     """Return the target week whose slots should exist for the current cycle."""
-    if now is None:
-        now = datetime.now(TORONTO_TZ)
-    elif now.tzinfo is None:
-        now = now.replace(tzinfo=TORONTO_TZ)
-    else:
-        now = now.astimezone(TORONTO_TZ)
+    now = resolve_now(now)
 
     this_monday = now.date() - timedelta(days=now.weekday())
     rollover = datetime.combine(this_monday, time(12, 0), tzinfo=TORONTO_TZ)
@@ -351,12 +383,7 @@ def generate_upcoming_months(
     if client is None:
         client = get_slot_generation_client()
 
-    if now is None:
-        now = datetime.now(TORONTO_TZ)
-    elif now.tzinfo is None:
-        now = now.replace(tzinfo=TORONTO_TZ)
-    else:
-        now = now.astimezone(TORONTO_TZ)
+    now = resolve_now(now)
 
     month_start = date(now.year, now.month, 1)
     end_exclusive = add_months(month_start, months)
@@ -407,12 +434,7 @@ def preview_upcoming_months(
     if months < 1:
         raise ValueError("months must be at least 1")
 
-    if now is None:
-        now = datetime.now(TORONTO_TZ)
-    elif now.tzinfo is None:
-        now = now.replace(tzinfo=TORONTO_TZ)
-    else:
-        now = now.astimezone(TORONTO_TZ)
+    now = resolve_now(now)
 
     month_start = date(now.year, now.month, 1)
     end_exclusive = add_months(month_start, months)
@@ -444,12 +466,7 @@ def cleanup_slots_before_current_month(client=None, now: datetime | None = None)
     """Delete time_slots whose dates are completely before the current month."""
     if client is None:
         client = get_slot_generation_client()
-    if now is None:
-        now = datetime.now(TORONTO_TZ)
-    elif now.tzinfo is None:
-        now = now.replace(tzinfo=TORONTO_TZ)
-    else:
-        now = now.astimezone(TORONTO_TZ)
+    now = resolve_now(now)
 
     cutoff = date(now.year, now.month, 1)
     table = client.table("time_slots")
@@ -470,12 +487,7 @@ def preview_cleanup_slots_before_current_month(client=None, now: datetime | None
     """Return slot rows before the current month without deleting them."""
     if client is None:
         client = get_slot_generation_client()
-    if now is None:
-        now = datetime.now(TORONTO_TZ)
-    elif now.tzinfo is None:
-        now = now.replace(tzinfo=TORONTO_TZ)
-    else:
-        now = now.astimezone(TORONTO_TZ)
+    now = resolve_now(now)
 
     cutoff = date(now.year, now.month, 1)
     table = client.table("time_slots")

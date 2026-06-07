@@ -39,9 +39,9 @@ export default async function Home() {
           <Link href="/register" className="link">
             Create an account
           </Link>
-          <Link href="/calender-view" className="link">
+          {/* <Link href="/calender-view" className="link">
             View next week calendar
-          </Link>
+          </Link> */}
         </div>
       </div>
     </main>

@@ -11,16 +11,23 @@ import {
   dayLabel,
   getBookingPhase,
   getCalendarNow,
+  nextTargetWeekMondayKey,
+  weekMondayForKey,
   weekRangeLabel,
 } from "../calendar-data";
 import { TalkingBrandHeader } from "../talking-brand-header";
+import { WeekNav } from "../week-nav";
 
 function keyToDate(key: string) {
   const [y, m, d] = key.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d, 12));
 }
 
-export default async function ReservationPage() {
+export default async function ReservationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -41,7 +48,18 @@ export default async function ReservationPage() {
   }
 
   const now = getCalendarNow();
-  const slots = await loadCalendarSlots(now);
+  const minMonday = currentWeekMondayKey(now);
+  const maxMonday = addDays(minMonday, 7);
+  // The upcoming bookable week is the default; navigation is limited to the
+  // current week and the next week.
+  const defaultMonday = nextTargetWeekMondayKey(now);
+  const requestedWeek = (await searchParams)?.week;
+  const requestedMonday = (requestedWeek ? weekMondayForKey(requestedWeek) : null) ?? defaultMonday;
+  const selectedMonday =
+    requestedMonday < minMonday ? minMonday : requestedMonday > maxMonday ? maxMonday : requestedMonday;
+  const isDefaultWeek = selectedMonday === defaultMonday;
+  const isCurrentWeekView = selectedMonday === minMonday;
+  const slots = await loadCalendarSlots(now, selectedMonday);
   const phase = getBookingPhase(now);
 
   // The student's own active reservations for the displayed week, so the grid
@@ -112,12 +130,16 @@ export default async function ReservationPage() {
           comeBackLabel={comeBackLabel}
           allDaysBooked={allDaysBooked}
           weekLabel={weekLabel}
+          isCurrentWeekView={isCurrentWeekView}
         />
         <div className="scheduler-topbar">
           <div>
             <p className="eyebrow">Toronto time · {currentTorontoLabel(now)}</p>
-            <h1>Reserve next week</h1>
-            <p className="scheduler-sub">{weekRangeLabel(slots)} · 30-minute office hours</p>
+            <h1>{isDefaultWeek ? "Reserve next week" : "View week"}</h1>
+            <p className="scheduler-sub">
+              {weekRangeLabel(slots)} ·{" "}
+              {isDefaultWeek ? "30-minute office hours" : "read-only — booking is open for next week only"}
+            </p>
           </div>
           <div className="topbar-actions">
             <AccountMenu
@@ -132,11 +154,21 @@ export default async function ReservationPage() {
           </div>
         </div>
 
+        <WeekNav
+          basePath="/reservation"
+          currentMonday={selectedMonday}
+          defaultMonday={defaultMonday}
+          minMonday={minMonday}
+          maxMonday={maxMonday}
+          rangeLabel={weekRangeLabel(slots)}
+        />
+
         <CalendarGrid
           slots={slots}
-          editable
+          editable={isDefaultWeek}
           myReservations={myReservations}
           bookedSlotKeys={Array.from(bookedSlotKeys)}
+          disablePastDays
           studentIdentity={{
             fullName: profile?.full_name ?? null,
             wechat: profile?.wechat ?? null,

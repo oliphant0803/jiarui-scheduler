@@ -78,6 +78,10 @@ function torontoDateKey(date = getCalendarNow()) {
   return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
 }
 
+export function currentTorontoDateKey(date = getCalendarNow()) {
+  return torontoDateKey(date);
+}
+
 function dateFromKey(key: string) {
   const [year, month, day] = key.split("-").map(Number);
   return new Date(Date.UTC(year, month - 1, day, 12));
@@ -117,6 +121,17 @@ export function nextTargetWeekMondayKey(date = getCalendarNow()) {
   const p = torontoParts(date);
   const minutes = p.hour * 60 + p.minute;
   return weekdayIndex(date) === 1 && minutes < 12 ? monday : addDays(monday, 7);
+}
+
+// Normalise an arbitrary YYYY-MM-DD key to the Monday of the week it falls in.
+// Returns null when the key is not a valid date, so callers can fall back to
+// their default week instead of trusting tampered query params.
+export function weekMondayForKey(key: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return null;
+  const [year, month, day] = key.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+  if (Number.isNaN(date.getTime())) return null;
+  return currentWeekMondayKey(date);
 }
 
 export function getBookingPhase(date = getCalendarNow()): BookingPhase {
@@ -194,8 +209,12 @@ export function parseTimeSlotCsv(csv: string): DaySchedule[] {
     .sort((a, b) => a.offset - b.offset || timeToMinutes(a.start) - timeToMinutes(b.start));
 }
 
-export function buildCalendarSlots(anchor = getCalendarNow(), schedule?: DaySchedule[]): CalendarSlot[] {
-  const monday = nextTargetWeekMondayKey(anchor);
+export function buildCalendarSlots(
+  anchor = getCalendarNow(),
+  schedule?: DaySchedule[],
+  mondayKey?: string,
+): CalendarSlot[] {
+  const monday = mondayKey ?? nextTargetWeekMondayKey(anchor);
   const rules =
     schedule ??
     parseTimeSlotCsv(`day,slot 1,slot 2,slot 3,slot 4,slot 5,slot 6

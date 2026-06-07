@@ -1,14 +1,17 @@
-import Link from "next/link";
-
 import { CalendarGrid } from "../calendar-grid";
 import { loadCalendarSlots } from "../calendar-schedule";
 import {
+  addDays,
+  currentWeekMondayKey,
   currentTorontoLabel,
   getBookingPhase,
   getCalendarNow,
+  nextTargetWeekMondayKey,
+  weekMondayForKey,
   weekRangeLabel,
 } from "../calendar-data";
 import { TalkingBrandHeader } from "../talking-brand-header";
+import { WeekNav } from "../week-nav";
 
 type ReservationInfo = {
   id: string;
@@ -21,9 +24,15 @@ type ReservationInfo = {
   student_wechat: string | null;
 };
 
-export async function CalendarViewContent() {
+export async function CalendarViewContent({ requestedWeek }: { requestedWeek?: string }) {
   const now = getCalendarNow();
-  const slots = await loadCalendarSlots(now);
+  const minMonday = currentWeekMondayKey(now);
+  const maxMonday = addDays(minMonday, 7);
+  const defaultMonday = nextTargetWeekMondayKey(now);
+  const requestedMonday = (requestedWeek ? weekMondayForKey(requestedWeek) : null) ?? defaultMonday;
+  const selectedMonday =
+    requestedMonday < minMonday ? minMonday : requestedMonday > maxMonday ? maxMonday : requestedMonday;
+  const slots = await loadCalendarSlots(now, selectedMonday);
   const phase = getBookingPhase(now);
 
   // Fetch reservations with student info from the API
@@ -56,10 +65,19 @@ export async function CalendarViewContent() {
             <p className="eyebrow">Toronto time · {currentTorontoLabel(now)}</p>
             <h1>Calendar view</h1>
             <p className="scheduler-sub">
-              {weekRangeLabel(slots)} · read-only next-week schedule
+              {weekRangeLabel(slots)} · read-only schedule
             </p>
           </div>
         </div>
+
+        <WeekNav
+          basePath="/calendar-view"
+          currentMonday={selectedMonday}
+          defaultMonday={defaultMonday}
+          minMonday={minMonday}
+          maxMonday={maxMonday}
+          rangeLabel={weekRangeLabel(slots)}
+        />
 
         <CalendarGrid
           slots={slots}

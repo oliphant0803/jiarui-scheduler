@@ -20,6 +20,7 @@ type Props = {
   comeBackLabel?: string;
   allDaysBooked?: boolean;
   weekLabel?: string;
+  isCurrentWeekView?: boolean;
 };
 
 export function TalkingBrandHeader({
@@ -29,6 +30,7 @@ export function TalkingBrandHeader({
   comeBackLabel,
   allDaysBooked = false,
   weekLabel,
+  isCurrentWeekView = false,
 }: Props) {
   const [zh, setZh] = useState(false);
 
@@ -65,6 +67,7 @@ export function TalkingBrandHeader({
             comeBackLabel={comeBackLabel}
             allDaysBooked={allDaysBooked}
             weekLabel={weekLabel}
+            isCurrentWeekView={isCurrentWeekView}
           />
         ) : (
           <EnglishMessage
@@ -74,6 +77,7 @@ export function TalkingBrandHeader({
             comeBackLabel={comeBackLabel}
             allDaysBooked={allDaysBooked}
             weekLabel={weekLabel}
+            isCurrentWeekView={isCurrentWeekView}
           />
         )}
       </div>
@@ -89,6 +93,15 @@ function summarize(reservations: ReservationLite[], zh = false): string {
   return zh ? `${base} 等 ${reservations.length} 个` : `${base} +${more} more`;
 }
 
+function reservationList(reservations: ReservationLite[], zh = false): string {
+  if (reservations.length === 0) return zh ? "本周暂无预约" : "no reserved slots this week";
+  return reservations
+    .map((reservation) =>
+      `${reservation.dayLabel} · ${reservation.start} (${reservation.examType} ${reservation.topic})`,
+    )
+    .join(zh ? "；" : "; ");
+}
+
 function EnglishMessage({
   phase,
   loggedIn,
@@ -96,6 +109,7 @@ function EnglishMessage({
   comeBackLabel,
   allDaysBooked,
   weekLabel,
+  isCurrentWeekView,
 }: Props) {
   if (!loggedIn) {
     return (
@@ -104,6 +118,14 @@ function EnglishMessage({
         <Link href="/reservation" className="btn compact-action talking-brand-text"> 
           <strong>log in first</strong>
           </Link> to book a timeslot.
+      </p>
+    );
+  }
+
+  if (isCurrentWeekView) {
+    return (
+      <p className="talking-brand-text">
+        Here is the list of slots you reserved:{" "}
       </p>
     );
   }
@@ -195,6 +217,7 @@ function ChineseMessage({
   comeBackLabel,
   allDaysBooked,
   weekLabel,
+  isCurrentWeekView,
 }: Props) {
   if (!loggedIn) {
     return (
@@ -202,6 +225,14 @@ function ChineseMessage({
         请先 <Link href="/reservation" className="btn compact-action talking-brand-text"> 
           <strong>登陆</strong>
           </Link>，然后才能预约时间。
+      </p>
+    );
+  }
+
+  if (isCurrentWeekView) {
+    return (
+      <p className="talking-brand-text">
+        这是你已预约的时间段列表：
       </p>
     );
   }

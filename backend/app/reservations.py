@@ -20,6 +20,32 @@ ReservationTopic = Literal["Listening", "Speaking", "Reading", "Writing"]
 TORONTO_TZ = ZoneInfo("America/Toronto")
 
 
+def parse_test_now() -> datetime | None:
+    """Return the configured TEST_NOW override as a Toronto-aware datetime."""
+    from app.config import get_settings
+
+    raw = (get_settings().test_now or "").strip()
+    if not raw or raw.lower() == "null":
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=TORONTO_TZ)
+    return parsed.astimezone(TORONTO_TZ)
+
+
+def resolve_now(now: datetime | None = None) -> datetime:
+    if now is None:
+        now = parse_test_now()
+    if now is None:
+        return datetime.now(TORONTO_TZ)
+    if now.tzinfo is None:
+        return now.replace(tzinfo=TORONTO_TZ)
+    return now.astimezone(TORONTO_TZ)
+
+
 class ReservationError(Exception):
     def __init__(self, status_code: int, detail: str) -> None:
         super().__init__(detail)
@@ -257,12 +283,7 @@ def flatten_reservation_row(row: dict) -> dict:
 
 
 def booking_window_for_slot(slot: Slot, now: datetime | None = None) -> BookingWindow:
-    if now is None:
-        now = datetime.now(TORONTO_TZ)
-    elif now.tzinfo is None:
-        now = now.replace(tzinfo=TORONTO_TZ)
-    else:
-        now = now.astimezone(TORONTO_TZ)
+    now = resolve_now(now)
 
     booking_monday = slot.week_start - timedelta(days=7)
     phase1_start = datetime.combine(booking_monday, time(12, 0), tzinfo=TORONTO_TZ)

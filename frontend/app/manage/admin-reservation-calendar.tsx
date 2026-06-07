@@ -9,6 +9,7 @@ import {
   dayLabel,
   examTypes,
   minutesToTime,
+  currentWeekMondayKey,
   nextTargetWeekMondayKey,
   timeToMinutes,
   topics,
@@ -78,9 +79,12 @@ function friendlyError(message: string): string {
 
 export function AdminReservationCalendar() {
   // The week students are currently booking, anchored to the calendar "now"
-  // (which honours NEXT_PUBLIC_TEST_NOW from .env). No week navigation — admins
-  // manage the upcoming target week.
-  const [weekMonday] = useState<string>(() => nextTargetWeekMondayKey());
+  // (which honours NEXT_PUBLIC_TEST_NOW from .env), is the default. Admins can
+  // navigate to other weeks; the data effect below refetches whenever it changes.
+  const minMonday = useMemo(() => currentWeekMondayKey(), []);
+  const maxMonday = useMemo(() => shiftKey(minMonday, 7), [minMonday]);
+  const defaultMonday = useMemo(() => nextTargetWeekMondayKey(), []);
+  const [weekMonday, setWeekMonday] = useState<string>(defaultMonday);
   const [slots, setSlots] = useState<SlotRow[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -180,6 +184,8 @@ export function AdminReservationCalendar() {
   }, [slots]);
 
   const activeCount = reservations.length;
+  const disablePrev = weekMonday <= minMonday;
+  const disableNext = weekMonday >= maxMonday;
 
   const rangeLabel = `${labelForKey(weekMonday).replace(/^\w+,\s*/, "")} – ${labelForKey(friday).replace(/^\w+,\s*/, "")}`;
 
@@ -187,9 +193,40 @@ export function AdminReservationCalendar() {
     <div className="admin-resv">
       <div className="admin-resv-bar">
         <div className="admin-resv-week">
-          <p className="popover-kicker">Upcoming bookable week</p>
+          <p className="popover-kicker">
+            {weekMonday === defaultMonday ? "Upcoming bookable week" : "Viewing week"}
+          </p>
           <strong>{rangeLabel}</strong>
         </div>
+        <nav className="week-nav" aria-label="Calendar week navigation">
+          <button
+            type="button"
+            className="week-nav-btn"
+            onClick={() => setWeekMonday((m) => (m <= minMonday ? minMonday : shiftKey(m, -7)))}
+            disabled={disablePrev}
+            aria-label="Previous week"
+          >
+            ← Prev
+          </button>
+          <button
+            type="button"
+            className="week-nav-btn"
+            onClick={() => setWeekMonday((m) => (m >= maxMonday ? maxMonday : shiftKey(m, 7)))}
+            disabled={disableNext}
+            aria-label="Next week"
+          >
+            Next →
+          </button>
+          {weekMonday !== defaultMonday && (
+            <button
+              type="button"
+              className="week-nav-reset"
+              onClick={() => setWeekMonday(defaultMonday)}
+            >
+              Back to current bookable week
+            </button>
+          )}
+        </nav>
         <span className="admin-resv-count">
           {activeCount} reservation{activeCount === 1 ? "" : "s"}
         </span>
