@@ -1066,6 +1066,76 @@ body {
   align-items: center;
 }
 
+.student-combobox {
+  position: relative;
+}
+
+.student-combobox .input {
+  padding-right: 2rem;
+}
+
+.student-combobox-caret {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.85rem;
+  pointer-events: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  transition: transform 0.15s ease;
+}
+
+.student-combobox-caret.is-open {
+  transform: rotate(180deg);
+}
+
+.student-combobox-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  /* show ~5 options, then scroll */
+  max-height: 11.75rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  box-shadow: 0 12px 28px rgba(15, 18, 32, 0.16);
+}
+
+.student-combobox-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font-size: 0.9rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.student-combobox-option:hover,
+.student-combobox-option:focus-visible {
+  background: rgba(239, 65, 53, 0.08);
+  outline: none;
+}
+
+.student-combobox-option.is-selected {
+  font-weight: 600;
+  background: rgba(239, 65, 53, 0.12);
+}
+
+.student-combobox-empty {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
 .cleanup-summary {
   margin-bottom: 0.75rem;
   padding: 0.7rem 0.85rem;

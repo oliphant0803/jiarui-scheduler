@@ -498,10 +498,6 @@ export function CalendarGrid({
                   <dt>Full name</dt>
                   <dd>{selectedReservationInfo.student_name || "N/A"}</dd>
                 </div>
-                <div>
-                  <dt>WeChat ID</dt>
-                  <dd>{selectedReservationInfo.student_wechat || "N/A"}</dd>
-                </div>
               </dl>
             </aside>
           </div>

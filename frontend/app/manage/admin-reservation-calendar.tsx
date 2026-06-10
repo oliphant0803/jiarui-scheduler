@@ -337,12 +337,27 @@ function ReservationPanel({
   const existing = panel.mode === "edit" ? panel.reservation : null;
 
   const [studentId, setStudentId] = useState<string>(existing?.student_id ?? "");
+  const [studentQuery, setStudentQuery] = useState("");
+  const [studentOpen, setStudentOpen] = useState(false);
   const [topic, setTopic] = useState<Topic>(existing?.topic ?? "Speaking");
   const [examType, setExamType] = useState<ExamType>(existing?.exam_type ?? slot.exam_type ?? "TEF");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const examValue = flexible ? examType : (slot.exam_type as ExamType);
+
+  const studentLabel = (s: Student) =>
+    `${s.full_name || "(no name)"}${s.wechat ? ` · ${s.wechat}` : ""}`;
+
+  const filteredStudents = useMemo(() => {
+    const q = studentQuery.trim().toLowerCase();
+    if (!q) return students;
+    return students.filter((s) =>
+      [s.full_name, s.wechat, s.email]
+        .filter(Boolean)
+        .some((v) => v!.toLowerCase().includes(q))
+    );
+  }, [students, studentQuery]);
 
   async function save() {
     setError(null);
@@ -447,22 +462,64 @@ function ReservationPanel({
 
         <div className="admin-resv-fields">
           {panel.mode === "add" && (
-            <label className="field compact-field">
+            <div
+              className="field compact-field student-combobox"
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setStudentOpen(false);
+                }
+              }}
+            >
               <span className="label">Student</span>
-              <select
+              <input
+                type="text"
                 className="input"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
+                role="combobox"
+                aria-expanded={studentOpen}
+                aria-autocomplete="list"
+                placeholder="Select a student…"
+                value={studentQuery}
+                onFocus={() => setStudentOpen(true)}
+                onChange={(e) => {
+                  setStudentQuery(e.target.value);
+                  setStudentOpen(true);
+                  if (studentId) setStudentId("");
+                }}
+              />
+              <span
+                className={`student-combobox-caret${studentOpen ? " is-open" : ""}`}
+                aria-hidden="true"
               >
-                <option value="">Select a student…</option>
-                {students.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name || "(no name)"}
-                    {s.wechat ? ` · ${s.wechat}` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
+                ▾
+              </span>
+              {studentOpen && (
+                <ul className="student-combobox-list" role="listbox">
+                  {filteredStudents.length === 0 ? (
+                    <li className="student-combobox-empty">No students found</li>
+                  ) : (
+                    filteredStudents.map((s) => (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={studentId === s.id}
+                          className={`student-combobox-option${
+                            studentId === s.id ? " is-selected" : ""
+                          }`}
+                          onClick={() => {
+                            setStudentId(s.id);
+                            setStudentQuery(studentLabel(s));
+                            setStudentOpen(false);
+                          }}
+                        >
+                          {studentLabel(s)}
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
           )}
 
           <label className="field compact-field">
