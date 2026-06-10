@@ -18,14 +18,24 @@ from app.supabase_client import get_service_client
 
 settings = get_settings()
 
+
+def _parse_cors_origins(raw_origins: str) -> list[str]:
+    return [
+        origin.strip().rstrip("/")
+        for origin in raw_origins.split(",")
+        if origin.strip()
+    ]
+
+
 app = FastAPI(
     title="Office Hour Scheduler API",
     version="0.1.0",
 )
 
-# Allow the local Next.js dev server to call the API during development.
+# Allow configured production frontends plus local Next.js dev servers.
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=_parse_cors_origins(settings.cors_origins),
     allow_origin_regex=r"^http://localhost:\d+$",
     allow_credentials=True,
     allow_methods=["*"],

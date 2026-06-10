@@ -92,6 +92,10 @@ export default function RegisterPage() {
       }
 
       setDone(true);
+    } catch {
+      setGeneralError(
+        "Could not reach the registration server. Please try again in a moment.",
+      );
     } finally {
       setLoading(false);
     }
@@ -207,6 +211,7 @@ export default function RegisterPage() {
             onChange={update("wechat")}
             error={errors.wechat}
             placeholder="your_wechat_id"
+            autoComplete="username"
           />
           <Field
             label="Password"
