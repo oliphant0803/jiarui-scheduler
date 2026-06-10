@@ -6,13 +6,15 @@ a single ``/health`` endpoint so the dev server can be verified end-to-end.
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
 
 from app.auth import get_current_user, require_active_user, require_admin
 from app.config import get_settings
 from app.reservations import ReservationError, SupabaseReservationRepo, create_reservation
-from app.schemas import CurrentUser, Profile, ReservationCreate, ReservationOut
+from app.schemas import CurrentUser, Profile, RegisterCreate, ReservationCreate, ReservationOut
 from app.slot_generator import cleanup_slots_before_current_month, generate_upcoming_months
 from app.slot_generator import preview_cleanup_slots_before_current_month, preview_upcoming_months
+from app.supabase_client import get_service_client
 
 settings = get_settings()
 
@@ -54,6 +56,103 @@ def read_identity(user: CurrentUser = Depends(get_current_user)) -> dict:
     Useful for confirming a token verifies and which role it carries.
     """
     return {"id": user.id, "email": user.email, "role": user.role}
+
+
+@app.post("/auth/register", status_code=status.HTTP_201_CREATED)
+def register_user(payload: RegisterCreate) -> dict:
+    """Create a confirmed Supabase Auth user without sending confirmation email."""
+    client = get_service_client()
+    conflicts = _registration_conflicts(
+        payload.email,
+        payload.phone,
+        payload.wechat,
+        client,
+    )
+    if any(conflicts.values()):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=conflicts)
+
+    try:
+        created = _create_confirmed_supabase_user(payload)
+    except httpx.HTTPStatusError as exc:
+        raise _registration_http_error(exc) from exc
+
+    return {
+        "id": created.get("id"),
+        "email": created.get("email", payload.email),
+        "message": "Account created. You can log in now.",
+    }
+
+
+def _registration_conflicts(
+    email: str,
+    phone: str,
+    wechat: str,
+    client,
+) -> dict[str, bool]:
+    checks = {
+        "email_taken": ("email", email.lower()),
+        "phone_taken": ("phone", phone),
+        "wechat_taken": ("wechat", wechat),
+    }
+    result: dict[str, bool] = {}
+    for key, (column, value) in checks.items():
+        resp = (
+            client.table("profiles")
+            .select("id")
+            .eq(column, value)
+            .limit(1)
+            .execute()
+        )
+        result[key] = bool(resp.data or [])
+    return result
+
+
+def _create_confirmed_supabase_user(payload: RegisterCreate) -> dict:
+    url = settings.supabase_url.rstrip("/")
+    service_key = settings.supabase_service_role_key
+    if not url or not service_key:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Supabase service role is not configured",
+        )
+
+    response = httpx.post(
+        f"{url}/auth/v1/admin/users",
+        headers={
+            "apikey": service_key,
+            "Authorization": f"Bearer {service_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "email": payload.email,
+            "password": payload.password,
+            "email_confirm": True,
+            "user_metadata": {
+                "full_name": payload.full_name,
+                "phone": payload.phone,
+                "wechat": payload.wechat,
+            },
+        },
+        timeout=30.0,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def _registration_http_error(exc: httpx.HTTPStatusError) -> HTTPException:
+    try:
+        body = exc.response.json()
+    except ValueError:
+        body = {"message": exc.response.text}
+
+    message = str(body.get("message") or body.get("error") or "Could not create account")
+    lowered = message.lower()
+    if "already" in lowered and "email" in lowered:
+        return HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"email_taken": True, "phone_taken": False, "wechat_taken": False},
+        )
+    return HTTPException(status_code=exc.response.status_code, detail=message)
 
 
 @app.post("/reservations", response_model=ReservationOut)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 UserRole = Literal["student", "admin"]
 ExamType = Literal["TEF", "TCF"]
@@ -51,6 +51,42 @@ class ReservationCreate(BaseModel):
     slot_id: str
     topic: ReservationTopic
     exam_type: Optional[ExamType] = None
+
+
+class RegisterCreate(BaseModel):
+    """Payload for server-side user registration.
+
+    The backend creates a confirmed Supabase Auth user with the service role so
+    signup does not depend on confirmation email delivery.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    email: str
+    password: str
+    full_name: str
+    phone: str
+    wechat: str
+
+    @field_validator("email", "full_name", "phone", "wechat")
+    @classmethod
+    def require_trimmed_value(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Field is required")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.lower()
+
+    @field_validator("password")
+    @classmethod
+    def require_strong_enough_password(cls, value: str) -> str:
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return value
 
 
 class ReservationOut(BaseModel):

@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import { createClient } from "@/lib/supabase/client";
 import { BrandHeader } from "../brand-header";
 import { EyeIcon, EyeOffIcon } from "../eye-icons";
 
@@ -56,27 +55,25 @@ export default function RegisterPage() {
     setErrors({});
     setLoading(true);
 
-    const supabase = createClient();
-
     try {
-      // 1. Specific uniqueness errors BEFORE signup (PROJECT_SPEC §3). The DB
-      //    unique indexes remain the authoritative backstop.
-      const { data: conflicts, error: rpcError } = await supabase.rpc(
-        "registration_conflicts",
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}/auth/register`,
         {
-          p_email: form.email.trim(),
-          p_phone: form.phone.trim(),
-          p_wechat: form.wechat.trim(),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email.trim(),
+            password: form.password,
+            full_name: form.fullName.trim(),
+            phone: form.phone.trim(),
+            wechat: form.wechat.trim(),
+          }),
         },
       );
 
-      if (rpcError) {
-        setGeneralError("Could not validate your details. Please try again.");
-        return;
-      }
-
-      const c = Array.isArray(conflicts) ? conflicts[0] : conflicts;
-      if (c && (c.email_taken || c.phone_taken || c.wechat_taken)) {
+      const body = await response.json().catch(() => null);
+      if (response.status === 409 && body?.detail) {
+        const c = body.detail;
         setErrors({
           email: c.email_taken ? "This email is already registered." : undefined,
           phone: c.phone_taken ? "This phone number is already in use." : undefined,
@@ -85,31 +82,12 @@ export default function RegisterPage() {
         return;
       }
 
-      // 2. Supabase signup — sends the verification email; the DB trigger
-      //    creates the profile from this metadata. Full name is NOT unique.
-      const { data, error } = await supabase.auth.signUp({
-        email: form.email.trim(),
-        password: form.password,
-        options: {
-          data: {
-            full_name: form.fullName.trim(),
-            phone: form.phone.trim(),
-            wechat: form.wechat.trim(),
-          },
-          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/login`,
-        },
-      });
-
-      if (error) {
-        // Most likely a race that hit a unique index, or a weak password.
-        setGeneralError(error.message);
-        return;
-      }
-
-      // Supabase obfuscates "email already registered" as a success with no
-      // identities — surface a clear message.
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        setErrors({ email: "This email is already registered." });
+      if (!response.ok) {
+        setGeneralError(
+          typeof body?.detail === "string"
+            ? body.detail
+            : "Could not create your account. Please try again.",
+        );
         return;
       }
 
@@ -124,10 +102,9 @@ export default function RegisterPage() {
       <main className="auth-wrap">
         <div className="card">
           <BrandHeader />
-          <h1 className="card-title">Vérifiez votre email</h1>
+          <h1 className="card-title">Account created</h1>
           <p className="card-sub">
-            We sent a verification link to <strong>{form.email}</strong>. Click it
-            to confirm your account — you must verify before you can log in.
+            Your account for <strong>{form.email}</strong> is ready. You can log in now.
           </p>
           <Link href="/login" className="btn btn-primary">
             Go to login
