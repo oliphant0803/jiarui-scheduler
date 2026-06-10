@@ -85,6 +85,7 @@ export async function CalendarViewContent({ requestedWeek }: { requestedWeek?: s
           bookedSlotKeys={bookedSlotKeys}
           reservationsInfo={reservations}
           isPublicView={true}
+          disablePastDays
         />
       </section>
     </main>

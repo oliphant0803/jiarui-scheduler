@@ -280,21 +280,21 @@ export function CalendarGrid({
                   ? isPastDay
                     ? "✓ Completed"
                     : "✓ Your booking"
+                  : isPastDay
+                    ? "Past"
                   : isBooked && isPublicView && bookedReservation
                     ? `${bookedReservation.exam_type} · ${bookedReservation.topic}`
-                    : isBooked
-                      ? "Booked"
-                      : isPastDay
-                        ? "Past"
-                      : !editable
-                        ? "Open"
-                        : lockedOut
-                          ? "Locked"
-                          : canBook
-                            ? "Select time"
-                            : "View only";
+                  : isBooked
+                    ? "Booked"
+                  : !editable
+                    ? "Open"
+                  : lockedOut
+                    ? "Locked"
+                  : canBook
+                    ? "Select time"
+                  : "View only";
 
-                const publicViewBooked = isBooked && isPublicView;
+                const publicViewBooked = isBooked && isPublicView && !isPastDay;
                 const classNames = `calendar-slot ${isSelected ? "is-selected" : ""} ${isPastDay ? "is-past-day" : ""} ${isPastDay && isMine ? "is-completed-booking" : ""} ${isMine ? "is-mine" : ""} ${publicViewBooked ? "admin-slot is-reserved" : isBooked ? "is-booked" : ""} ${lockedOut && !isBooked ? "is-locked" : ""}`;
 
                 return (
