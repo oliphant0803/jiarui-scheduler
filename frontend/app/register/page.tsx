@@ -12,6 +12,7 @@ type FieldErrors = Partial<
 >;
 
 const WECHAT_ID_REGEX = /^[A-Za-z][A-Za-z0-9_-]{5,19}$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 function hasChineseCharacters(value: string) {
   return /[\u3400-\u4DBF\u4E00-\u9FFF]/.test(value);
@@ -19,6 +20,10 @@ function hasChineseCharacters(value: string) {
 
 function isValidWeChatId(value: string) {
   return WECHAT_ID_REGEX.test(value);
+}
+
+function isValidEmail(value: string) {
+  return EMAIL_REGEX.test(value);
 }
 
 export default function RegisterPage() {
@@ -53,12 +58,25 @@ export default function RegisterPage() {
             : undefined,
         }));
       }
+
+      if (key === "email") {
+        const trimmed = nextValue.trim();
+        setErrors((prev) => ({
+          ...prev,
+          email: trimmed
+            ? !isValidEmail(trimmed)
+              ? "Please enter a valid email address."
+              : undefined
+            : undefined,
+        }));
+      }
     };
 
   function validate(): FieldErrors {
     const e: FieldErrors = {};
-    if (!form.email.trim()) e.email = "Email is required.";
-    else if (!form.email.includes("@")) e.email = "Please enter a valid email address.";
+    const emailValue = form.email.trim();
+    if (!emailValue) e.email = "Email is required.";
+    else if (!isValidEmail(emailValue)) e.email = "Please enter a valid email address.";
     if (!form.fullName.trim()) e.fullName = "Legal full name is required.";
     if (!form.phone.trim()) e.phone = "Phone number is required.";
     const wechatValue = form.wechat.trim();
