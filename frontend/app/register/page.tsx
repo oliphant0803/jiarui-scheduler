@@ -11,6 +11,16 @@ type FieldErrors = Partial<
   Record<"email" | "fullName" | "phone" | "wechat" | "password" | "confirm", string>
 >;
 
+const WECHAT_ID_REGEX = /^[A-Za-z][A-Za-z0-9_-]{5,19}$/;
+
+function hasChineseCharacters(value: string) {
+  return /[\u3400-\u4DBF\u4E00-\u9FFF]/.test(value);
+}
+
+function isValidWeChatId(value: string) {
+  return WECHAT_ID_REGEX.test(value);
+}
+
 export default function RegisterPage() {
   const [form, setForm] = useState({
     email: "",
@@ -28,15 +38,33 @@ export default function RegisterPage() {
 
   const update =
     (key: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((f) => ({ ...f, [key]: e.target.value }));
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const nextValue = e.target.value;
+      setForm((f) => ({ ...f, [key]: nextValue }));
+
+      if (key === "wechat") {
+        const trimmed = nextValue.trim();
+        setErrors((prev) => ({
+          ...prev,
+          wechat: trimmed
+            ? hasChineseCharacters(trimmed) || !isValidWeChatId(trimmed)
+              ? "WeChat ID must be 6-20 characters, use letters, numbers, underscores or hyphens, and start with a letter."
+              : undefined
+            : undefined,
+        }));
+      }
+    };
 
   function validate(): FieldErrors {
     const e: FieldErrors = {};
     if (!form.email.trim()) e.email = "Email is required.";
+    else if (!form.email.includes("@")) e.email = "Please enter a valid email address.";
     if (!form.fullName.trim()) e.fullName = "Legal full name is required.";
     if (!form.phone.trim()) e.phone = "Phone number is required.";
-    if (!form.wechat.trim()) e.wechat = "WeChat ID is required.";
+    const wechatValue = form.wechat.trim();
+    if (!wechatValue) e.wechat = "WeChat ID is required.";
+    else if (hasChineseCharacters(wechatValue) || !isValidWeChatId(wechatValue))
+      e.wechat = "WeChat ID must be 6-20 characters, use letters, numbers, underscores or hyphens, and start with a letter.";
     if (form.password.length < 8)
       e.password = "Password must be at least 8 characters.";
     if (form.confirm !== form.password)
