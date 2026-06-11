@@ -12,6 +12,7 @@ import {
 } from "../calendar-data";
 import { TalkingBrandHeader } from "../talking-brand-header";
 import { WeekNav } from "../week-nav";
+import AutoRefresh from "../reservation/auto-refresh";
 
 type ReservationInfo = {
   id: string;
@@ -58,6 +59,7 @@ export async function CalendarViewContent({ requestedWeek }: { requestedWeek?: s
 
   return (
     <main className="scheduler-page">
+      <AutoRefresh />
       <section className="scheduler-panel">
         <TalkingBrandHeader phase={phase} loggedIn={false} />
         <div className="scheduler-topbar">
