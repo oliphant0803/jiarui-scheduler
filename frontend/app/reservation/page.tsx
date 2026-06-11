@@ -17,6 +17,7 @@ import {
 } from "../calendar-data";
 import { TalkingBrandHeader } from "../talking-brand-header";
 import { WeekNav } from "../week-nav";
+import AutoRefresh from "./auto-refresh";
 
 function keyToDate(key: string) {
   const [y, m, d] = key.split("-").map(Number);
@@ -122,6 +123,7 @@ export default async function ReservationPage({
 
   return (
     <main className="scheduler-page">
+      <AutoRefresh />
       <section className="scheduler-panel">
         <TalkingBrandHeader
           phase={phase}
